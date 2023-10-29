@@ -17,7 +17,7 @@ import java.util.Date;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PilaCoinJson implements Cloneable{
 
-    private Long id;
+//    private Long id;
     private Date dataCriacao;
     private byte[] chaveCriador;
     private String nomeCriador;

@@ -19,39 +19,40 @@ import java.util.HexFormat;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PilaCoin {
 
-    private byte[] chavePublica;
-    private String nomeMinerador;
-    private Date dataHoraCriacao;
-    private byte[] magicNumber;     //big integer de 256 bits
+    private Date dataCriacao;
+    private byte[] chaveCriador;
+    private String nomeCriador;
+    private byte[] nonce;     //big integer de 128 bits
+
 
     public enum StatusPila{AG_BLOCO, AG_VALIDACAO, BLOCO_EM_VALIDACAO, VALIDO, INVALIDO}
 
     //@SneakyThrows
-    public static void main(String[] args) throws NoSuchAlgorithmException {
-
-        //salvar a chave publica e privada e recuperar
-        byte[] pubKey = null;
-        //criar o par de chaves;
-        //instanciar o pilaCoin com seus atributos;
-        //gerar o hash do pilaCoin para comparação com a dificuldade.
-        PilaCoin pilacoin = PilaCoin.builder().chavePublica(pubKey)
-                .dataHoraCriacao(new Date()).nomeMinerador("Ewerton").build();
-        //salvar a chave pública e privada e recuperar
-        byte[] valorDif = HexFormat.of().parseHex("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        BigInteger dificuldade = new BigInteger(valorDif);
-        BigInteger hash;
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-
-        do{
-            String json = "";
-            hash = new BigInteger((md.digest(json.getBytes(StandardCharsets.UTF_8))));
-            hash = hash.abs();
-
-        } while (hash.compareTo(dificuldade) < 0);
-            //quando sair deste laço é pq achou.
-
-
-    }
+//    public static void main(String[] args) throws NoSuchAlgorithmException {
+//
+//        //salvar a chave publica e privada e recuperar
+//        byte[] pubKey = null;
+//        //criar o par de chaves;
+//        //instanciar o pilaCoin com seus atributos;
+//        //gerar o hash do pilaCoin para comparação com a dificuldade.
+//        PilaCoin pilacoin = PilaCoin.builder().chavePublica(pubKey)
+//                .dataHoraCriacao(new Date()).nomeMinerador("Ewerton").build();
+//        //salvar a chave pública e privada e recuperar
+//        byte[] valorDif = HexFormat.of().parseHex("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+//        BigInteger dificuldade = new BigInteger(valorDif);
+//        BigInteger hash;
+//        MessageDigest md = MessageDigest.getInstance("SHA-256");
+//
+//        do{
+//            String json = "";
+//            hash = new BigInteger((md.digest(json.getBytes(StandardCharsets.UTF_8))));
+//            hash = hash.abs();
+//
+//        } while (hash.compareTo(dificuldade) < 0);
+//            //quando sair deste laço é pq achou.
+//
+//
+//    }
 
     public void montaPilaMinerado() {
         //monta o objeto e envia pro server em método específico na classe PilaValidationService;
