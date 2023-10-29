@@ -1,0 +1,14 @@
+PilaCoin
+
+PRIMEIRA PARTE (MINERAR PILAS)
+
+- Método que verifica se existe arquivo para o armazenamento do par de chaves pública e privada;
+    - Se sim: (abre um thread só para isso) pega o par de chaves e envia para método que cria a hash do usuário;
+    - Se não: envia para método que cria o par de chaves e armazena em um arquivo txt;
+
+- Chama o método que cria a hash do usuário
+
+- Chama o método que busca a Dificuldade do servidor e verifica se a hash do usuário é < Dificuldade;
+    - Se sim: enviar para método que monta o pila e envia para o servidor.
+    - Se não: chama o método que cria a hash do usuário e assim sucessivamente;
+
