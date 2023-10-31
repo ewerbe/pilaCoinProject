@@ -51,11 +51,8 @@ public class PilaValidationService {
             System.out.println("DificuldadeRetorno = " + retornoDificuldade);
             System.out.println("dificuldadeStr = " + dificuldadeStr);
             System.out.println("dificuldade BigInteger = " + dificuldade);
-
             //chamar o método para minerar;
             minerarPilaCoin(dificuldade, Boolean.TRUE);
-
-
         } catch (JsonProcessingException e){
             throw new RuntimeException(e);
         }
@@ -96,7 +93,6 @@ public class PilaValidationService {
             if (numHashPila.compareTo(dificuldade) < 0) {
                 System.out.println("MINEROU 1 PILA!!");
                 registraPila(pilaCoin , pilaCoin.getNonce());
-
             }
         }
     }
@@ -115,12 +111,32 @@ public class PilaValidationService {
         String pilaJsonString = objectMapper.writeValueAsString(pilaJson);
         System.out.println("************** PILACOIN MONTADO COM SUCESSO!");
         System.out.println("************** ENVIANDO O PILACOIN...");
-        rabbitTemplate.convertAndSend("pila_minerado", pilaJsonString);
+        rabbitTemplate.convertAndSend("pila-minerado", pilaJsonString);
         System.out.println("************** PILACOIN ENVIADO COM SUCESSO!");
     }
 
-    //@RabbitListener(queues = {"{queue.valida_pila}"})
-//    public String validaPilaMinerado()
+//    @RabbitListener(queues = {"{queue.valida_pila}"})
+//    public String validaPilaMinerado() {
+//        //o que implemenar neste método?
+//        return null;
+//    }
 
+    @RabbitListener(queues = "pila-minerado")
+    public void receivePilaCoinMinerado(@Payload String pilaJsonString) {
+        try {
+            // Processar a mensagem recebida da fila "pila-minerado"
+            ObjectMapper objectMapper = new ObjectMapper();
+            PilaCoinJson pilaCoinJson = objectMapper.readValue(pilaJsonString, PilaCoinJson.class);
+
+            // Faça o que você deseja com a PilaCoin minerada, por exemplo, registrá-la no sistema ou realizar alguma validação.
+            System.out.println("PilaCoin minerada recebida: " + pilaCoinJson);
+
+            // Implemente o código aqui para lidar com a PilaCoin minerada, como salvá-la no banco de dados, atualizar estatísticas, etc.
+
+        } catch (JsonProcessingException e) {
+            // Trate exceções aqui, como problemas de desserialização do JSON.
+            throw new RuntimeException("Erro ao processar a PilaCoin minerada", e);
+        }
+    }
 
 }
