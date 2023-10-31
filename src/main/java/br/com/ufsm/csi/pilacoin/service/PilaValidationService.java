@@ -78,11 +78,13 @@ public class PilaValidationService {
             //se for menor: registra o pilaCoin minerado.
             SecureRandom sr = new SecureRandom();
             BigInteger magicNumber = new BigInteger(128, sr);
+            //monta o objeto pilaCoin
             PilaCoin pilaCoin = PilaCoin.builder()
                     .dataCriacao(new Date())
                     .chaveCriador(parChaves.getPublic().getEncoded())
                     .nomeCriador("Ewerton")
                     .nonce(magicNumber.toString().getBytes()).build();
+            //passa para json e depois cria a hash.
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             String pilaJson = objectMapper.writeValueAsString(pilaCoin);
@@ -92,7 +94,6 @@ public class PilaValidationService {
             BigInteger numHashPila = new BigInteger(hash).abs();
 
             if (numHashPila.compareTo(dificuldade) < 0) {
-                //System.out.println(Base64.encodeBase64String(keyPair.getPublic().getEncoded()));
                 System.out.println("MINEROU 1 PILA!!");
                 registraPila(pilaCoin , pilaCoin.getNonce());
 
@@ -101,10 +102,7 @@ public class PilaValidationService {
     }
 
     private void registraPila(PilaCoin pilaCoin, byte[] nonce) throws JsonProcessingException {
-        //registrar o pila chamando queue "valida-pila";
-        //ObjectMapper objectMapper = new ObjectMapper();
-        //objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        //String pilaString = objectMapper.writeValueAsString(pilaCoin);
+        System.out.println("******** MONTANDO O PILA MINERADO...");
         BigInteger bigIntegerNonce = new BigInteger(nonce);
         PilaCoinJson pilaJson = PilaCoinJson.builder()
                 .chaveCriador(pilaCoin.getChaveCriador())
@@ -113,8 +111,16 @@ public class PilaValidationService {
                 .nonce(bigIntegerNonce.toString())
                 .build();
         System.out.println("********************** pilaJson = " + pilaJson);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String pilaJsonString = objectMapper.writeValueAsString(pilaJson);
+        System.out.println("************** PILACOIN MONTADO COM SUCESSO!");
+        System.out.println("************** ENVIANDO O PILACOIN...");
+        rabbitTemplate.convertAndSend("pila_minerado", pilaJsonString);
+        System.out.println("************** PILACOIN ENVIADO COM SUCESSO!");
     }
 
-//    @RabbitListener(queues = {"{queue.valida_pila}"})
+    //@RabbitListener(queues = {"{queue.valida_pila}"})
 //    public String validaPilaMinerado()
+
+
 }
