@@ -2,6 +2,7 @@ package br.com.ufsm.csi.pilacoin.service;
 
 import br.com.ufsm.csi.pilacoin.model.PilaCoin;
 import br.com.ufsm.csi.pilacoin.model.PilaCoinJson;
+import br.com.ufsm.csi.pilacoin.model.ValidacaoPilaJson;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -14,12 +15,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.security.*;
 import java.util.Date;
 import java.util.Map;
 
@@ -38,7 +40,7 @@ public class PilaValidationService {
 //    private MineradoraService mineradoraService;
 
     public static KeyPair parChaves;
-    private static BigInteger dificuldade = null;
+    private static BigInteger dificuldade = BigInteger.ZERO;
 
     @RabbitListener(queues = {"${queue.dificuldade}"})
     public void receivePilaCoin(@Payload String strPilaCoinJson) {
@@ -93,8 +95,8 @@ public class PilaValidationService {
             //apenas valores positivos.
             BigInteger numHashPila = new BigInteger(hash).abs();
 
-            if (numHashPila.compareTo(dificuldade) < 0) {
-                System.out.println("MINEROU 1 PILA!!");
+            if (numHashPila.abs().compareTo(dificuldade) < 0) {
+                System.out.println("**************************** MINEROU 1 PILA!!");
                 registraPila(pilaCoin , pilaCoin.getNonce());
             }
         }
@@ -131,11 +133,17 @@ public class PilaValidationService {
             ObjectMapper objectMapper = new ObjectMapper();
             PilaCoinJson pilaCoinJson = objectMapper.readValue(pilaJsonString, PilaCoinJson.class);
             //ver se o pila é próprio ou de outro minerador:
+            System.out.println("********************* PILA MINERADO RECEBIDO!");
             if (pilaCoinJson.getNomeCriador().equals("Ewerton")) {
+                System.out.println("******************** PILA MINERADO RECEBIDO É PRÓPRIO!");
                 //se é meu: reenviar pra fila "pila-minerado".
+                System.out.println("******************** REENVIANDO PILA MINERADO RECEBIDO PARA FILA pila-minerado...");
                 rabbitTemplate.convertAndSend("pila-minerado", pilaJsonString);
+                System.out.println("******************** PILA MINERADO RECEBIDO REENVIADO COM SUCESSO!");
             } else {
                 //se é de outro: enviar para método de validação de pilas.
+                System.out.println("******************** PILA MINERADO RECEBIDO NÃO É PRÓPRIO...");
+                System.out.println("******************** ENVIANDO PARA VALIDAÇÃO...");
                 validaPilas(pilaCoinJson, pilaJsonString);
             }
             System.out.println("************* PilaCoin minerado recebido: " + pilaCoinJson);
@@ -145,6 +153,7 @@ public class PilaValidationService {
         }
     }
 
+    //ativar esta audição da fila ewerton apenas depois de minerar algum pila, pois, senão, ela ainda não existe.
     @RabbitListener(queues = "ewerton")
     public void receiveMsgFeedbackUser(@Payload String feedback) {
         try {
@@ -172,9 +181,9 @@ public class PilaValidationService {
             //apenas valores positivos.
             BigInteger numHashPila = new BigInteger(hash).abs();
             System.out.println("*************** VALIDANDO PILA...");
-            if (numHashPila.compareTo(dificuldade) < 0) {
+            if (numHashPila.abs().compareTo(dificuldade) < 0) {
                 System.out.println("******************* PILA VALIDADO COM SUCESSO!");
-                //TODO: assinaPilaValidado(ENVIAR O QUE DE PARÂMETRO?);
+                assinaPilaValidado(pilaCoinJson, hash);
             } else {
                 System.out.println("******************* PILA NÃO VÁLIDO!");
                 System.out.println("******************* REENVIANDO PARA FILA DE PILAS MINERADOS...");
@@ -182,23 +191,42 @@ public class PilaValidationService {
                 System.out.println("******************* PILA REENVIADO COM SUCESSO!");
             }
         } catch (RuntimeException e) {
-            System.out.println("****************** Erro ao validar o pila!");
-            System.out.println("****************** Reenviando o pila para a fila 'pila-minerado'");
+            System.out.println("****************** ERRO AO VALIDAR O PILA!");
+            System.out.println("****************** REENVIANDO O PILA PARA A FILA 'pila-minerado'");
             rabbitTemplate.convertAndSend("pila-minerado", pilaMineradoRebecido);
-            System.out.println("****************** pila enviado com sucesso!");
-        } catch (UnsupportedEncodingException | NoSuchAlgorithmException | JsonProcessingException e) {
+            System.out.println("****************** PILA ENVIADO COM SUCESSO!");
+        } catch (UnsupportedEncodingException | NoSuchAlgorithmException | JsonProcessingException |
+                 InvalidKeyException | BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException e) {
             throw new RuntimeException(e);
         }
 
 
     }
 
-    private void assinaPilaValidado() {
+    private void assinaPilaValidado(PilaCoinJson pilaCoinJson,
+                                    byte[] hash)
+            throws NoSuchPaddingException, NoSuchAlgorithmException,
+            InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         //se for menor: instancia o objeto validacaoPilaJson e popula com os atributos do pila;
         //para assinar o pila validado: pego a hash do pila e criptografo com a minha chave privada;
         //populo o atributo assinaturaPilaCoin com a hash criptografada;
-        //tranformar o validaCaoPilaJson em json e enviar para fila "pila-validado".
-        //se não for: reenvia para fila "pila-minerado"
+        Cipher cipherRSA = Cipher.getInstance("RSA");
+        //iniciar o cipherRSA com o modo encriptografador;
+        cipherRSA.init(Cipher.ENCRYPT_MODE, parChaves.getPrivate());
+        //finalizar a criptografia com o que se quer criptografar.
+        System.out.println("******************* ASSINANDO PILACOIN VALIDADO...");
+        byte[] assinaturaPilaCoinJson = cipherRSA.doFinal(hash);
+        System.out.println("******************* PILACOIN ASSINADO COM SUCESSO!");
+        //instanciando o pilacoin validado para envio na fila pila-validado.
+        ValidacaoPilaJson validacaoPilaJson = ValidacaoPilaJson.builder()
+                .nomeValidador("Ewerton")
+                .chavePublicaValidador(parChaves.getPublic().getEncoded())
+                .assinaturaPilaCoin(assinaturaPilaCoinJson)
+                .pilaCoin(pilaCoinJson).build();
+
+        System.out.println("****************** ENVIANDO PILACOIN VALIDADO PARA FILA pila-validado...");
+        rabbitTemplate.convertAndSend("pila-validado", validacaoPilaJson);
+        System.out.println("****************** PILACOIN VALIDADO ENVIADO COM SUCESSO!");
     }
 
 }

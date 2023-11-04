@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ValicacaoPilaJson {
+public class ValidacaoPilaJson {
 
     private String nomeValidador;
     private byte[] chavePublicaValidador;
