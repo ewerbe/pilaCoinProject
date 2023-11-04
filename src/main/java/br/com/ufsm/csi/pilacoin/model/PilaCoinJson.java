@@ -18,11 +18,18 @@ import java.util.Date;
 public class PilaCoinJson implements Cloneable{
 
 //    private Long id;
-    private Date dataCriacao;
-    private byte[] chaveCriador;
-    private String nomeCriador;
-    private PilaCoin.StatusPila status;
-    private String nonce;
+//    private Date dataCriacao;
+//    private byte[] chaveCriador;
+//    private String nomeCriador;
+//    private PilaCoin.StatusPila status;
+//    private String nonce;
+
+        private Long id;
+        private Date dataCriacao;
+        private byte[] chaveCriador;
+        private String nomeCriador;
+        private PilaCoin.StatusPila status;
+        private String nonce;
 
     @Override
     public PilaCoinJson clone() {

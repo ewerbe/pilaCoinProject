@@ -19,13 +19,20 @@ import java.util.HexFormat;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PilaCoin {
 
-    private Date dataCriacao;
-    private byte[] chaveCriador;
-    private String nomeCriador;
-    private byte[] nonce;     //big integer de 128 bits
+        private byte[] chavePublica;
+        private String nomeMinerador;
+        private Date dataHoraCriacao;
+        private String nonce;
+        private StatusPila statusPila;
+        public enum StatusPila { AG_VALIDACAO, AG_BLOCO, BLOCO_EM_VALIDACAO, VALIDO, INVALIDO }
+
+//    private Date dataCriacao;
+//    private byte[] chaveCriador;
+//    private String nomeCriador;
+//    private byte[] nonce;     //big integer de 128 bits
 
 
-    public enum StatusPila{AG_BLOCO, AG_VALIDACAO, BLOCO_EM_VALIDACAO, VALIDO, INVALIDO}
+    //public enum StatusPila{AG_BLOCO, AG_VALIDACAO, BLOCO_EM_VALIDACAO, VALIDO, INVALIDO}
 
     //@SneakyThrows
 //    public static void main(String[] args) throws NoSuchAlgorithmException {
