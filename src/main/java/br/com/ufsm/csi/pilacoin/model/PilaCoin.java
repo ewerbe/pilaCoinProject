@@ -1,10 +1,10 @@
 package br.com.ufsm.csi.pilacoin.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import lombok.Builder;
-import lombok.Data;
-import lombok.SneakyThrows;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -15,57 +15,23 @@ import java.util.HexFormat;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Entity
 public class PilaCoin {
 
-        private byte[] chavePublica;
-        private String nomeMinerador;
-        private Date dataHoraCriacao;
-        private String nonce;
-        private StatusPila statusPila;
-        public enum StatusPila { AG_VALIDACAO, AG_BLOCO, BLOCO_EM_VALIDACAO, VALIDO, INVALIDO }
+    @Id
+    @SequenceGenerator(name = "seq_pilacoin", sequenceName = "seq_pilacoin", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_pilacoin")
+    @JsonIgnore
+    private Long id;
+    private Date dataCriacao;
+    private byte[] chaveCriador;
+    private String nomeCriador;
+    private String status;
+    private String nonce;
 
-//    private Date dataCriacao;
-//    private byte[] chaveCriador;
-//    private String nomeCriador;
-//    private byte[] nonce;     //big integer de 128 bits
 
-
-    //public enum StatusPila{AG_BLOCO, AG_VALIDACAO, BLOCO_EM_VALIDACAO, VALIDO, INVALIDO}
-
-    //@SneakyThrows
-//    public static void main(String[] args) throws NoSuchAlgorithmException {
-//
-//        //salvar a chave publica e privada e recuperar
-//        byte[] pubKey = null;
-//        //criar o par de chaves;
-//        //instanciar o pilaCoin com seus atributos;
-//        //gerar o hash do pilaCoin para comparação com a dificuldade.
-//        PilaCoin pilacoin = PilaCoin.builder().chavePublica(pubKey)
-//                .dataHoraCriacao(new Date()).nomeMinerador("Ewerton").build();
-//        //salvar a chave pública e privada e recuperar
-//        byte[] valorDif = HexFormat.of().parseHex("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-//        BigInteger dificuldade = new BigInteger(valorDif);
-//        BigInteger hash;
-//        MessageDigest md = MessageDigest.getInstance("SHA-256");
-//
-//        do{
-//            String json = "";
-//            hash = new BigInteger((md.digest(json.getBytes(StandardCharsets.UTF_8))));
-//            hash = hash.abs();
-//
-//        } while (hash.compareTo(dificuldade) < 0);
-//            //quando sair deste laço é pq achou.
-//
-//
-//    }
-
-    public void montaPilaMinerado() {
-        //monta o objeto e envia pro server em método específico na classe PilaValidationService;
-    }
-
-    //    {
-//        BigInteger dificuldade = new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16).abs();
-//    }
 }

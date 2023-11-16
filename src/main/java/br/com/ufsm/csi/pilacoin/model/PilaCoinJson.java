@@ -2,6 +2,9 @@ package br.com.ufsm.csi.pilacoin.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,21 +18,19 @@ import java.util.Date;
 @NoArgsConstructor
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Entity
 public class PilaCoinJson implements Cloneable{
 
-//    private Long id;
-//    private Date dataCriacao;
-//    private byte[] chaveCriador;
-//    private String nomeCriador;
-//    private PilaCoin.StatusPila status;
-//    private String nonce;
+    @Id
+    @GeneratedValue
+    private Long id;
+    private Date dataCriacao;
+    private String chaveCriador;
+    private String nomeCriador;
+    private StatusPila status;
+    private String nonce;
 
-        private Long id;
-        private Date dataCriacao;
-        private byte[] chaveCriador;
-        private String nomeCriador;
-        private PilaCoin.StatusPila status;
-        private String nonce;
+    public enum StatusPila{AG_BLOCO, AG_VALIDACAO, BLOCO_EM_VALIDACAO, VALIDO, INVALIDO}
 
     @Override
     public PilaCoinJson clone() {
