@@ -212,14 +212,14 @@ public class PilaValidationService {
     }
 
     //ativar esta audição da fila ewerton apenas depois de minerar algum pila, pois, senão, ela ainda não existe.
-//    @RabbitListener(queues = "ewerton")
-//    public void receiveMsgFeedbackUser(@Payload String feedback) {
-//        try {
-//            System.out.println("*************** Mensagem de feedback recebida: "+ feedback);
-//        } catch (Exception e) {
-//            throw new RuntimeException("Erro ao receber mensagem de feedback! ", e);
-//        }
-//    }
+    @RabbitListener(queues = "ewerton-joaokunde")
+    public void receiveMsgFeedbackUser(@Payload String feedback) {
+        try {
+            System.out.println("*************** Mensagem de feedback recebida: "+ feedback);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao receber mensagem de feedback! ", e);
+        }
+    }
 
 //    private void validaPilas(PilaCoinJson pilaCoinJson, String pilaMineradoRebecido) {
 //        //fazer try catch: se qualquer erro ocorrer: reenviar o pilaMineradoRebecido para a fila "pila-minerado";
