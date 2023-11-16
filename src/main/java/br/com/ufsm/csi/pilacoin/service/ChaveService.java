@@ -32,7 +32,7 @@ public class ChaveService {
             return new KeyPair(chavePublica, chavePrivada);
         } else {
             KeyPairGenerator geradorKeyPair= KeyPairGenerator.getInstance("RSA");
-            geradorKeyPair.initialize(2048);
+            geradorKeyPair.initialize(1024);
             KeyPair keyPair = geradorKeyPair.generateKeyPair();
             FileOutputStream filePubOut = new FileOutputStream("public.key", false);
             FileOutputStream filePrivOut = new FileOutputStream("private.key", false);
