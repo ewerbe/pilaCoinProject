@@ -5,13 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.HexFormat;
 
 @Data
 @Builder
@@ -23,6 +17,8 @@ import java.util.HexFormat;
 public class PilaCoin {
 
     @Id
+    @SequenceGenerator(name = "pilacoin_seq", sequenceName = "pilacoin_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "pilacoin_seq")
     @JsonIgnore
     private Long id;
     private Date dataCriacao;
