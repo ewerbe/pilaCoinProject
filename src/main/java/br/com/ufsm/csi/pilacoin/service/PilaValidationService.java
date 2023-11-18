@@ -37,7 +37,7 @@ public class PilaValidationService {
     private String queue_msgs;
 
     @Value("clientes-errors")
-    private String queue_errors; //tratar se vierem erros
+    private String queue_errors;
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
@@ -55,8 +55,6 @@ public class PilaValidationService {
 
     @RabbitListener(queues = {"${queue.dificuldade}"})
     public void receivePilaCoin(@Payload String strPilaCoinJson) {
-        //System.out.println("Dificuldade: " + strPilaCoinJson);
-        //pegar a dificuldade e passar para o PilaCoin usando objectmapper do jackson;
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, Object> retornoDificuldade = objectMapper.readValue(strPilaCoinJson,
@@ -82,8 +80,6 @@ public class PilaValidationService {
     private void minerarPilaCoin(BigInteger dificuldade, Boolean mineracaoAtiva) {
 
         ChaveService chaveService = new ChaveService();
-        //PilaValidationService pilaValidationService = new PilaValidationService();
-
         //antes de minerar, vai pegar o par de chaves.
         parChaves = chaveService.leParChaves();
         if(mineracaoAtiva) {
@@ -91,14 +87,8 @@ public class PilaValidationService {
         }
         while(mineracaoAtiva) {
             //pega a dificuldade;
-            //cria a hash dos dados e compara com a dificuldade:
-            //se for menor: registra o pilaCoin minerado.
+            //cria a hash dos dados e compara com a dificuldade.
             SecureRandom sr = new SecureRandom();
-            BigInteger magicNumber = new BigInteger(128, sr);
-//            byte[] bNum = new byte[256 / 8];
-//            Random rnd = new Random(System.currentTimeMillis());
-//            rnd.nextBytes(bNum);
-//            pila.setNonce(new BigInteger(bNum).abs().toString());
             Random random = new Random();
             ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
             byte[] byteArray = new byte[256 / 8];
@@ -115,11 +105,7 @@ public class PilaValidationService {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             String pilaStringJson = ow.writeValueAsString(pilaCoin);
-            //MessageDigest md = MessageDigest.getInstance("SHA-256");
-            //byte[] hash = md.digest(pilaStringJson.getBytes("UTF-8"));
             BigInteger numHashPila = new BigInteger(md.digest(pilaStringJson.getBytes(StandardCharsets.UTF_8))).abs();
-            //apenas valores positivos.
-            //BigInteger numHashPila = new BigInteger(hash).abs();
 
             if (numHashPila.compareTo(dificuldade) < 0) {
                 System.out.println("**************************** MINEROU 1 PILA!!");
@@ -136,59 +122,15 @@ public class PilaValidationService {
                 System.out.println("**************************** SALVO COM SUCESSO!");
                 rabbitTemplate.convertAndSend("pila-minerado", pilaStringJson);
                 System.out.println("**************************** PILA ENVIADO COM SUCESSO!");
-                //registraPila(pilaCoin , pilaCoin.getNonce());
             }
         }
     }
-
-    //método redundante
-//    private void registraPila(PilaCoin pilaCoin, String nonce) throws JsonProcessingException {
-//        System.out.println("******** MONTANDO O PILA MINERADO...");
-        //BigInteger bigIntegerNonce = new BigInteger(nonce);
-//        private Long id;
-//        private Date dataCriacao;
-//        private byte[] chaveCriador;
-//        private String nomeCriador;
-//        private PilaCoin.StatusPila status;
-//        private String nonce;
-//        PilaCoinJson pilaJson = PilaCoinJson.builder()
-//                .dataCriacao(pilaCoin.getDataHoraCriacao())
-//                .chaveCriador(pilaCoin.getChavePublica())
-//                .nomeCriador(pilaCoin.getNomeMinerador())
-//                .nonce(nonce)
-//                .build();
-//        System.out.println("********************** pilaJson = " + pilaJson);
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        String pilaJsonString = objectMapper.writeValueAsString(pilaJson);
-//        System.out.println("************** PILACOIN MONTADO COM SUCESSO!");
-//        System.out.println("************** ENVIANDO O PILACOIN...");
-
-//        String strPilaCoinJsonDona = """
-//        {"chaveCriador":"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAno9b8lIVrBP9J
-//        l2+BZPCq18jlJEbiwOY6c3NOnSc9bvVlEzBy/z8Myfzlfq3YxuAR71Qq2UWiHTMiw307MPK/XY78kCdMXpEXQdrqu8J84GNuuaz/sZ
-//        /74YADNdatDinuhxiDZd00ULBJodr6pGnB/LRjOTkM2DoHF7PLwzGYZj5TxMrPRW2DNbx/MBxK069mC+S1hyocbWTQlOaDt2zYiUfN
-//        srf52ulmHM2DkrgCTjYn8nG2+OMSzNXkqN7sHJnW1E4rvdPyS2Bi6xn+OBO4jK2nOF8gu4qZCIJb2FOmlMH0D5lSqp9ZVqN/QNMtwg0
-//        oyz90mDiUwBV8sSjmsrj/QIDAQAB","dataCriacao":1699124938360,"nomeCriador":"ADonato","nonce":"409507132086
-//        43344792211455821639896881101755920158178356638536284138313"}
-//        """;
-
-//        rabbitTemplate.convertAndSend("pila-minerado", pilaJsonString);
-////        rabbitTemplate.convertAndSend("pila-minerado", strPilaCoinJsonDona);
-//        System.out.println("************** PILACOIN ENVIADO COM SUCESSO!");
-//    }
-
-//    @RabbitListener(queues = {"{queue.valida_pila}"})
-//    public String validaPilaMinerado() {
-//        //o que implemenar neste método?
-//        return null;
-//    }
 
     @RabbitListener(queues = "pila-minerado")
     public void receivePilaCoinMinerado(@Payload String pilaJsonString) {
         try {
             //ver o pila que chegou.
             ObjectMapper objectMapper = new ObjectMapper();
-            //PilaCoinJson pilaCoinJson = objectMapper.readValue(pilaJsonString, PilaCoinJson.class);
             PilaCoin pilaCoin = objectMapper.readValue(pilaJsonString, PilaCoin.class);
             //ver se o pila é próprio ou de outro minerador:
             System.out.println("********************* PILA MINERADO RECEBIDO!");
@@ -211,7 +153,7 @@ public class PilaValidationService {
         }
     }
 
-    //ativar esta audição da fila ewerton apenas depois de minerar algum pila, pois, senão, ela ainda não existe.
+    //ativar esta audição da fila ewerton-joaokunde apenas depois de minerar algum pila, pois, senão, ela não existirá.
     @RabbitListener(queues = "ewerton-joaokunde")
     public void receiveMsgFeedbackUser(@Payload String feedback) {
         try {
@@ -221,47 +163,7 @@ public class PilaValidationService {
         }
     }
 
-//    private void validaPilas(PilaCoinJson pilaCoinJson, String pilaMineradoRebecido) {
-//        //fazer try catch: se qualquer erro ocorrer: reenviar o pilaMineradoRebecido para a fila "pila-minerado";
-//        try{
-//            //transformar o pila em hash e ver se é menor que a dificuldade;
-//            PilaCoin pilaCoin = PilaCoin.builder()
-//                    .chavePublica(pilaCoinJson.getChavePublica())
-//                    .nomeMinerador(pilaCoinJson.getNomeMinerador())
-//                    .dataHoraCriacao(pilaCoinJson.getDataHoraCriacao())
-//                    .nonce(pilaCoinJson.getNonce())
-//                    .build();
-//            //passa para json e depois cria a hash.
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-//            String pilaJson = objectMapper.writeValueAsString(pilaCoin);
-//            MessageDigest md = MessageDigest.getInstance("SHA-256");
-//            byte[] hash = md.digest(pilaJson.getBytes("UTF-8"));
-//            //apenas valores positivos.
-//            BigInteger numHashPila = new BigInteger(hash).abs();
-//            System.out.println("*************** VALIDANDO PILA...");
-//            if (numHashPila.abs().compareTo(dificuldade) < 0) {
-//                System.out.println("******************* PILA VALIDADO COM SUCESSO!");
-//                assinaPilaValidado(pilaCoinJson, hash);
-//            } else {
-//                System.out.println("******************* PILA NÃO VÁLIDO!");
-//                System.out.println("******************* REENVIANDO PARA FILA DE PILAS MINERADOS...");
-//                rabbitTemplate.convertAndSend("pila-minerado", pilaMineradoRebecido);
-//                System.out.println("******************* PILA REENVIADO COM SUCESSO!");
-//            }
-//        } catch (RuntimeException e) {
-//            System.out.println("****************** ERRO AO VALIDAR O PILA!");
-//            System.out.println("****************** REENVIANDO O PILA PARA A FILA 'pila-minerado'");
-//            rabbitTemplate.convertAndSend("pila-minerado", pilaMineradoRebecido);
-//            System.out.println("****************** PILA ENVIADO COM SUCESSO!");
-//        } catch (UnsupportedEncodingException | NoSuchAlgorithmException | JsonProcessingException |
-//                 InvalidKeyException | BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
-
     private void validaPilas(PilaCoin pilaCoin, String pilaMineradoRebecido) {
-        //fazer try catch: se qualquer erro ocorrer: reenviar o pilaMineradoRebecido para a fila "pila-minerado";
         try{
             //transformar o pila em hash e ver se é menor que a dificuldade;
             Random random = new Random();
@@ -269,13 +171,6 @@ public class PilaValidationService {
             byte[] byteArray = new byte[256 / 8];
             random.nextBytes(byteArray);
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            // monta o objeto pilaCoin          TODO: já tem o objeto, não precisa montá-lo novamente.
-//            PilaCoin pilaCoin = PilaCoin.builder()
-//                    .chavePublica(pilaCoinJson.getChaveCriador())
-//                    .nomeMinerador(pilaCoinJson.getNomeCriador())
-//                    .dataHoraCriacao(pilaCoinJson.getDataCriacao())
-//                    .nonce(pilaCoinJson.getNonce())
-//                    .build();
             //passa para json e depois cria a hash.
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -302,7 +197,6 @@ public class PilaValidationService {
             throw new RuntimeException(e);
         }
     }
-
 
     private void assinaPilaValidado(PilaCoin pilaCoin,
                                     byte[] hash)
