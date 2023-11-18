@@ -23,8 +23,6 @@ import java.util.HexFormat;
 public class PilaCoin {
 
     @Id
-    @SequenceGenerator(name = "seq_pilacoin", sequenceName = "seq_pilacoin", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_pilacoin")
     @JsonIgnore
     private Long id;
     private Date dataCriacao;
