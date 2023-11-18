@@ -62,6 +62,7 @@ public class PilaValidationService {
             String dificuldadeStr = retornoDificuldade.get("dificuldade").toString();
             dificuldade = new BigInteger(dificuldadeStr, 16).abs();
             DificuldadeJson dificuldadePersistencia = new DificuldadeJson();
+            dificuldadePersistencia.setDificuldade(dificuldadeStr);
             dificuldadePersistencia.setInicio(retornoDificuldade.get("inicio").toString());
             dificuldadePersistencia.setValidadeFinal(retornoDificuldade.get("validadeFinal").toString());
             dificuldadeService.save(dificuldadePersistencia);
