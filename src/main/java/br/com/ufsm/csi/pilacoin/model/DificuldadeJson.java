@@ -21,10 +21,10 @@ import java.util.Date;
 public class DificuldadeJson {
 
     @Id
-    @SequenceGenerator(name = "seq_dificuldade", sequenceName = "seq_dificuldade", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_dificuldade")
+    @SequenceGenerator(name = "dificuldade_json_seq", sequenceName = "dificuldade_json_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "dificuldade_json_seq")
     @JsonIgnore
-    private Long id;
+    private Long dificuldade_json_seq;
     private String dificuldade;
     private String inicio;
     private String validadeFinal;
