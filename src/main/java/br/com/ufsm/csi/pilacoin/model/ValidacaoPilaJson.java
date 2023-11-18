@@ -21,6 +21,7 @@ public class ValidacaoPilaJson {
     @SequenceGenerator(name = "seq_validacao_pilacoin", sequenceName = "seq_validacao_pilacoin", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_validacao_pilacoin")
     @JsonIgnore
+    private Long id;
     private String nomeValidador;
     private byte[] chavePublicaValidador;
     private byte[] assinaturaPilaCoin;
