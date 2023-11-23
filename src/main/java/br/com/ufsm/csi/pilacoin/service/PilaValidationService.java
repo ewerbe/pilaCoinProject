@@ -1,5 +1,6 @@
 package br.com.ufsm.csi.pilacoin.service;
 
+import br.com.ufsm.csi.pilacoin.dto.PilaValidadoDto;
 import br.com.ufsm.csi.pilacoin.model.DificuldadeJson;
 import br.com.ufsm.csi.pilacoin.model.PilaCoin;
 //import br.com.ufsm.csi.pilacoin.model.PilaCoinJson;
@@ -49,6 +50,8 @@ public class PilaValidationService {
     @Autowired
     private ValidacaoPilaJsonService validacaoPilaJsonService;
     @Autowired
+    private PilaValidadoDtoService pilaValidadoDtoService;
+    @Autowired
     private PilaCoinJsonService pilaCoinJsonService;
 
     public static KeyPair parChaves = null;
@@ -87,20 +90,19 @@ public class PilaValidationService {
         if(mineracaoAtiva) {
             System.out.println("********** INICIANDO MINERAÇÃO DE PILACOINS");
         }
-        while(mineracaoAtiva) {
-            //pega a dificuldade;
+        while(mineracaoAtiva) {                 //TODO: rever a criação do nonce***************************
             //cria a hash dos dados e compara com a dificuldade.
-            SecureRandom sr = new SecureRandom();
             Random random = new Random();
             ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
             byte[] byteArray = new byte[256 / 8];
+
             random.nextBytes(byteArray);
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             //monta o objeto pilaCoin
             PilaCoin pilaCoin = PilaCoin.builder()
                     .chaveCriador(parChaves.getPublic().getEncoded())
                     .nomeCriador("ewerton-joaokunde")
-                    .dataCriacao(new Date())
+                    .dataCriacao(new Date()) //(new BigInteger(128, rnd).toString()
                     .nonce(new BigInteger(md.digest(byteArray)).abs().toString())
                     .build();
             //passa para json e depois cria a hash.
@@ -114,15 +116,15 @@ public class PilaValidationService {
                 System.out.println("**************************** MINEROU 1 PILA!!");
                 System.out.println("**************************** ENVIANDO PILA MINERADO...");
                 System.out.println("**************************** SALVANDO PILA EM BANCO...");
-                PilaCoinJson pilaCoinJson = PilaCoinJson
-                        .builder()
-                        .dataCriacao(pilaCoin.getDataCriacao())
-                        .chaveCriador(pilaCoin.getChaveCriador().toString())
-                        .nomeCriador(pilaCoin.getNomeCriador())
-                        .nonce(pilaCoin.getNonce())
-                        .build();
+//                PilaCoinJson pilaCoinJson = PilaCoinJson
+//                        .builder()
+//                        .dataCriacao(pilaCoin.getDataCriacao())
+//                        .chaveCriador(pilaCoin.getChaveCriador().toString())
+//                        .nomeCriador(pilaCoin.getNomeCriador())
+//                        .nonce(pilaCoin.getNonce())
+//                        .build();
                 //salvando o pila nos dois formatos no BD.
-                pilaCoinJsonService.save(pilaCoinJson);
+                //pilaCoinJsonService.save(pilaCoinJson);
                 pilaCoinService.save(pilaCoin);
                 System.out.println("**************************** SALVO COM SUCESSO!");
                 rabbitTemplate.convertAndSend("pila-minerado", pilaStringJson);
@@ -202,13 +204,15 @@ public class PilaValidationService {
         } catch (NoSuchAlgorithmException |
                  InvalidKeyException | BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException e) {
             throw new RuntimeException(e);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 
     private void assinaPilaValidado(PilaCoin pilaCoinRecebido,
                                     byte[] hash)
             throws NoSuchPaddingException, NoSuchAlgorithmException,
-            InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+            InvalidKeyException, IllegalBlockSizeException, BadPaddingException, JsonProcessingException {
         //populo o atributo assinaturaPilaCoin com a hash criptografada;
         Cipher cipherRSA = Cipher.getInstance("RSA");
         //iniciar o cipherRSA com o modo encriptografador;
@@ -217,6 +221,7 @@ public class PilaValidationService {
         System.out.println("******************* ASSINANDO PILACOIN VALIDADO...");
         byte[] assinaturaPilaCoinJson = cipherRSA.doFinal(hash);
         System.out.println("******************* PILACOIN ASSINADO COM SUCESSO!");
+
         //instanciando o pilacoin validado para envio na fila pila-validado.
         ValidacaoPilaJson validacaoPilaJson = ValidacaoPilaJson.builder()
                 .nomeValidador("ewerton-joaokunde")
@@ -224,10 +229,24 @@ public class PilaValidationService {
                 .assinaturaPilaCoin(assinaturaPilaCoinJson)
                 .pilaCoin(pilaCoinRecebido).build();
         System.out.println("****************** SALVANDO PILA VALIDADO EM BANCO...");
-        validacaoPilaJsonService.save(validacaoPilaJson);
+
+        PilaValidadoDto pilaValidadoDto = PilaValidadoDto.builder()
+                .nomeValidador(validacaoPilaJson.getNomeValidador())
+                .chavePublicaValidador(validacaoPilaJson.getChavePublicaValidador().toString())
+                .assinaturaPilaCoin(validacaoPilaJson.getAssinaturaPilaCoin().toString())
+                .noncePilaCoinValidado(validacaoPilaJson.getPilaCoin().getNonce().toString())
+                .nomeCriadorPilaCoin(validacaoPilaJson.getPilaCoin().getNomeCriador()).build();
+        pilaValidadoDtoService.save(pilaValidadoDto);
+        //validacaoPilaJsonService.save(validacaoPilaJson);
         System.out.println("****************** SALVO COM SUCESSO!");
+
         System.out.println("****************** ENVIANDO PILACOIN VALIDADO PARA FILA pila-validado...");
-        rabbitTemplate.convertAndSend("pila-validado", validacaoPilaJson);
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String validacaoPilaJsonString = ow.writeValueAsString(validacaoPilaJson);
+        rabbitTemplate.convertAndSend("pila-validado", validacaoPilaJsonString);
         System.out.println("****************** PILACOIN VALIDADO ENVIADO COM SUCESSO!");
         System.out.println("*************************************************************************************");
     }
