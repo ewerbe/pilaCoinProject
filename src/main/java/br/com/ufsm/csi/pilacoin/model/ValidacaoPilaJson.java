@@ -18,9 +18,7 @@ import lombok.NoArgsConstructor;
 @Entity
 public class ValidacaoPilaJson {
     @Id
-    @SequenceGenerator(name = "seq_validacao_pilacoin", sequenceName = "seq_validacao_pilacoin", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_validacao_pilacoin")
-    @JsonIgnore
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     private String nomeValidador;
     private byte[] chavePublicaValidador;
