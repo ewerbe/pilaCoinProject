@@ -121,39 +121,39 @@ public class PilaValidationService {
         }
     }
 
-//    @RabbitListener(queues = "pila-minerado")
-//    public void receivePilaCoinMinerado(@Payload String pilaJsonString) {
-//        try {
-//            //ver o pila que chegou.
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            PilaCoin pilaCoin = objectMapper.readValue(pilaJsonString, PilaCoin.class);
-//            //ver se o pila é próprio ou de outro minerador:
-//            System.out.println("*************************************************************************************");
-//            System.out.println("********************* PILA MINERADO RECEBIDO!");
-//            if (pilaCoin.getNomeCriador().equals("ewerton-joaokunde")) {
-//                System.out.println("******************** PILA MINERADO RECEBIDO É PRÓPRIO!");
-//                //se é meu: reenviar pra fila "pila-minerado".
-//                System.out.println("******************** REENVIANDO PILA MINERADO RECEBIDO PARA FILA pila-minerado...");
-//                rabbitTemplate.convertAndSend("pila-minerado", pilaJsonString);
-//                System.out.println("******************** PILA MINERADO RECEBIDO REENVIADO COM SUCESSO!");
-//                System.out.println("*************************************************************************************");
-//            } else {
-//                //se é de outro: enviar para método de validação de pilas.
-//                System.out.println("******************** PILA MINERADO RECEBIDO NÃO É PRÓPRIO...");
-//                System.out.println("******************** ENVIANDO PARA VALIDAÇÃO...");
-//                System.out.println("*************************************************************************************");
-//                validaPilas(pilaCoin, pilaJsonString);
-//            }
-//            System.out.println("************* PilaCoin minerado recebido: " + pilaCoin);
-//
-//        } catch (JsonProcessingException e) {
-//            System.out.println("*************************************************************************************");
-//            System.out.println("************** ERRO COM PILACOIN RECEBIDO...REENVIANDO...");
-//            System.out.println("*************************************************************************************");
-//            rabbitTemplate.convertAndSend("pila-minerado", pilaJsonString);
-//            //throw new RuntimeException("Erro ao processar a PilaCoin minerada", e);
-//        }
-//    }
+    @RabbitListener(queues = "pila-minerado")
+    public void receivePilaCoinMinerado(@Payload String pilaJsonString) {
+        try {
+            //ver o pila que chegou.
+            ObjectMapper objectMapper = new ObjectMapper();
+            PilaCoin pilaCoin = objectMapper.readValue(pilaJsonString, PilaCoin.class);
+            //ver se o pila é próprio ou de outro minerador:
+            System.out.println("*************************************************************************************");
+            System.out.println("********************* PILA MINERADO RECEBIDO!");
+            if (pilaCoin.getNomeCriador().equals("ewerton-joaokunde")) {
+                System.out.println("******************** PILA MINERADO RECEBIDO É PRÓPRIO!");
+                //se é meu: reenviar pra fila "pila-minerado".
+                System.out.println("******************** REENVIANDO PILA MINERADO RECEBIDO PARA FILA pila-minerado...");
+                rabbitTemplate.convertAndSend("pila-minerado", pilaJsonString);
+                System.out.println("******************** PILA MINERADO RECEBIDO REENVIADO COM SUCESSO!");
+                System.out.println("*************************************************************************************");
+            } else {
+                //se é de outro: enviar para método de validação de pilas.
+                System.out.println("******************** PILA MINERADO RECEBIDO NÃO É PRÓPRIO...");
+                System.out.println("******************** ENVIANDO PARA VALIDAÇÃO...");
+                System.out.println("*************************************************************************************");
+                validaPilas(pilaCoin, pilaJsonString);
+            }
+            System.out.println("************* PilaCoin minerado recebido: " + pilaCoin);
+
+        } catch (JsonProcessingException e) {
+            System.out.println("*************************************************************************************");
+            System.out.println("************** ERRO COM PILACOIN RECEBIDO...REENVIANDO...");
+            System.out.println("*************************************************************************************");
+            rabbitTemplate.convertAndSend("pila-minerado", pilaJsonString);
+            //throw new RuntimeException("Erro ao processar a PilaCoin minerada", e);
+        }
+    }
 
     //ativar esta audição da fila ewerton-joaokunde apenas depois de minerar algum pila, pois, senão, ela não existirá.
     @RabbitListener(queues = "ewerton-joaokunde")
@@ -166,14 +166,14 @@ public class PilaValidationService {
     }
 
     //fila para relatório de funcionalidades desenvolvidas no projeto.
-    @RabbitListener(queues = "report")
-    public void receiveUsersReport(@Payload String usersReport) {
-        try {
-            System.out.println("*************** Relatório recebido: "+ usersReport);
-        } catch (Exception e) {
-            throw new RuntimeException("*********** Erro ao receber relatório! ", e);
-        }
-    }
+//    @RabbitListener(queues = "report")
+//    public void receiveUsersReport(@Payload String usersReport) {
+//        try {
+//            System.out.println("*************** Relatório recebido: "+ usersReport);
+//        } catch (Exception e) {
+//            throw new RuntimeException("*********** Erro ao receber relatório! ", e);
+//        }
+//    }
 
     private void validaPilas(PilaCoin pilaCoin, String pilaMineradoRebecido) {
         try{
@@ -224,15 +224,15 @@ public class PilaValidationService {
                 .nomeValidador("ewerton-joaokunde")
                 .chavePublicaValidador(parChaves.getPublic().getEncoded())
                 .assinaturaPilaCoin(assinaturaPilaCoinJson)
-                .pilaCoin(pilaCoinRecebido).build();
+                .pilaCoinJson(pilaCoinRecebido).build();
         System.out.println("****************** SALVANDO PILA VALIDADO EM BANCO...");
 
         PilaValidadoDto pilaValidadoDto = PilaValidadoDto.builder()
                 .nomeValidador(validacaoPilaJson.getNomeValidador())
                 .chavePublicaValidador(validacaoPilaJson.getChavePublicaValidador().toString())
                 .assinaturaPilaCoin(validacaoPilaJson.getAssinaturaPilaCoin().toString())
-                .noncePilaCoinValidado(validacaoPilaJson.getPilaCoin().getNonce().toString())
-                .nomeCriadorPilaCoin(validacaoPilaJson.getPilaCoin().getNomeCriador()).build();
+                .noncePilaCoinValidado(validacaoPilaJson.getPilaCoinJson().getNonce().toString())
+                .nomeCriadorPilaCoin(validacaoPilaJson.getPilaCoinJson().getNomeCriador()).build();
         pilaValidadoDtoService.save(pilaValidadoDto);
         //validacaoPilaJsonService.save(validacaoPilaJson);
         System.out.println("****************** SALVO COM SUCESSO!");

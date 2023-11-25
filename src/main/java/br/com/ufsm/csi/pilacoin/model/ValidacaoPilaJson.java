@@ -25,5 +25,5 @@ public class ValidacaoPilaJson {
     private byte[] assinaturaPilaCoin;
     @OneToOne
     @JoinColumn(name = "id_pilacoin")
-    private PilaCoin pilaCoin;
+    private PilaCoin pilaCoinJson;
 }
