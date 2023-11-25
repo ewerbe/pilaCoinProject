@@ -80,7 +80,7 @@ public class PilaValidationService {
             throw new RuntimeException(e);
         }
     }
-
+    //TODO: retirar a criação do objeto Pilacoin do laço while ***************************
     @SneakyThrows
     private void minerarPilaCoin(BigInteger dificuldade, Boolean mineracaoAtiva) {
 
@@ -90,24 +90,19 @@ public class PilaValidationService {
         if(mineracaoAtiva) {
             System.out.println("********** INICIANDO MINERAÇÃO DE PILACOINS");
         }
-        while(mineracaoAtiva) {                 //TODO: rever a criação do nonce***************************
+        //TODO: chamar método para a criação do ojjeto pilacoin
+        PilaCoin pilaCoin = getPilaCoin();
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        byte[] byteArray = new byte[256 / 8];
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        while(mineracaoAtiva) {
             //cria a hash dos dados e compara com a dificuldade.
-            Random random = new Random();
-            ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-            byte[] byteArray = new byte[256 / 8];
-
+            SecureRandom random = getSecureRandom();
             random.nextBytes(byteArray);
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            //monta o objeto pilaCoin
-            PilaCoin pilaCoin = PilaCoin.builder()
-                    .chaveCriador(parChaves.getPublic().getEncoded())
-                    .nomeCriador("ewerton-joaokunde")
-                    .dataCriacao(new Date()) //(new BigInteger(128, rnd).toString()
-                    .nonce(new BigInteger(md.digest(byteArray)).abs().toString())
-                    .build();
+            pilaCoin.setNonce(new BigInteger(md.digest(byteArray)).abs().toString());
             //passa para json e depois cria a hash.
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             String pilaStringJson = ow.writeValueAsString(pilaCoin);
             BigInteger numHashPila = new BigInteger(md.digest(pilaStringJson.getBytes(StandardCharsets.UTF_8))).abs();
 
@@ -116,15 +111,7 @@ public class PilaValidationService {
                 System.out.println("**************************** MINEROU 1 PILA!!");
                 System.out.println("**************************** ENVIANDO PILA MINERADO...");
                 System.out.println("**************************** SALVANDO PILA EM BANCO...");
-//                PilaCoinJson pilaCoinJson = PilaCoinJson
-//                        .builder()
-//                        .dataCriacao(pilaCoin.getDataCriacao())
-//                        .chaveCriador(pilaCoin.getChaveCriador().toString())
-//                        .nomeCriador(pilaCoin.getNomeCriador())
-//                        .nonce(pilaCoin.getNonce())
-//                        .build();
-                //salvando o pila nos dois formatos no BD.
-                //pilaCoinJsonService.save(pilaCoinJson);
+                //salvando o pila no BD.
                 pilaCoinService.save(pilaCoin);
                 System.out.println("**************************** SALVO COM SUCESSO!");
                 rabbitTemplate.convertAndSend("pila-minerado", pilaStringJson);
@@ -249,6 +236,18 @@ public class PilaValidationService {
         rabbitTemplate.convertAndSend("pila-validado", validacaoPilaJsonString);
         System.out.println("****************** PILACOIN VALIDADO ENVIADO COM SUCESSO!");
         System.out.println("*************************************************************************************");
+    }
+
+    private PilaCoin getPilaCoin() {
+        return PilaCoin.builder()
+                .chaveCriador(parChaves.getPublic().getEncoded())
+                .nomeCriador("ewerton-joaokunde")
+                .dataCriacao(new Date())
+                .build();
+    }
+
+    private SecureRandom getSecureRandom() {
+        return new SecureRandom();
     }
 
 }
