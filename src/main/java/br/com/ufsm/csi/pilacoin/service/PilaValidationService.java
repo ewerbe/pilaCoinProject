@@ -80,7 +80,7 @@ public class PilaValidationService {
             throw new RuntimeException(e);
         }
     }
-    //TODO: retirar a criação do objeto Pilacoin do laço while ***************************
+
     @SneakyThrows
     private void minerarPilaCoin(BigInteger dificuldade, Boolean mineracaoAtiva) {
 
