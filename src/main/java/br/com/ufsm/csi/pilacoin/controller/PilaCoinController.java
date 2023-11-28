@@ -6,6 +6,7 @@ import br.com.ufsm.csi.pilacoin.model.PilaCoinJson;
 import br.com.ufsm.csi.pilacoin.service.PilaCoinJsonService;
 import br.com.ufsm.csi.pilacoin.service.PilaValidadoDtoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -13,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 public class PilaCoinController {
 
     @Autowired
