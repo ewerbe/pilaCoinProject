@@ -22,10 +22,12 @@ public class Bloco {
     @Id
     @JsonIgnore
     private Long numeroBloco;
-    private String nonceBlocoAnterior;
     private String nonce;
-    private String chaveUsuarioMinerador; //chave-pública do usuário que descobreo nonce;
+    private String nonceBlocoAnterior;
+    private String nomeUsuarioMinerador;
+    private byte[] chaveUsuarioMinerador; //chave-pública do usuário que descobreo nonce;
     @OneToMany
     @JoinColumn(name = "id_bloco")
     private List<Transacao> transacoes;
+
 }
