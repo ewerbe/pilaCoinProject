@@ -57,29 +57,30 @@ public class PilaValidationService {
     public static KeyPair parChaves = null;
     private static BigInteger dificuldade = BigInteger.ZERO;
 
-    @RabbitListener(queues = {"${queue.dificuldade}"})
-    public void receivePilaCoin(@Payload String strPilaCoinJson) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, Object> retornoDificuldade = objectMapper.readValue(strPilaCoinJson,
-                    new TypeReference<Map<String, Object>>() {});
-            String dificuldadeStr = retornoDificuldade.get("dificuldade").toString();
-            dificuldade = new BigInteger(dificuldadeStr, 16).abs();
-            DificuldadeJson dificuldadePersistencia = new DificuldadeJson();
-            dificuldadePersistencia.setDificuldade(dificuldadeStr);
-            dificuldadePersistencia.setInicio(retornoDificuldade.get("inicio").toString());
-            dificuldadePersistencia.setValidadeFinal(retornoDificuldade.get("validadeFinal").toString());
-            dificuldadeService.save(dificuldadePersistencia);
-
-            System.out.println("DificuldadeRetorno = " + retornoDificuldade);
-            System.out.println("dificuldadeStr = " + dificuldadeStr);
-            System.out.println("dificuldade BigInteger = " + dificuldade);
-            //chamar o método para minerar;
-            minerarPilaCoin(dificuldade, Boolean.TRUE);
-        } catch (JsonProcessingException e){
-            throw new RuntimeException(e);
-        }
-    }
+//    @RabbitListener(queues = {"${queue.dificuldade}"})
+//    public void receivePilaCoin(@Payload String strPilaCoinJson) {
+//        try {
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            Map<String, Object> retornoDificuldade = objectMapper.readValue(strPilaCoinJson,
+//                    new TypeReference<Map<String, Object>>() {});
+//            String dificuldadeStr = retornoDificuldade.get("dificuldade").toString();
+//            dificuldade = new BigInteger(dificuldadeStr, 16).abs();
+//            //BigInteger dificuldadeFromQueue = new BigInteger(stDificuldade, 16).abs();
+//            DificuldadeJson dificuldadePersistencia = new DificuldadeJson();
+//            dificuldadePersistencia.setDificuldade(dificuldadeStr);
+//            dificuldadePersistencia.setInicio(retornoDificuldade.get("inicio").toString());
+//            dificuldadePersistencia.setValidadeFinal(retornoDificuldade.get("validadeFinal").toString());
+//            dificuldadeService.save(dificuldadePersistencia);
+//
+//            System.out.println("DificuldadeRetorno = " + retornoDificuldade);
+//            System.out.println("dificuldadeStr = " + dificuldadeStr);
+//            System.out.println("dificuldade BigInteger = " + dificuldade);
+//            //chamar o método para minerar;
+//            minerarPilaCoin(dificuldade, Boolean.TRUE);
+//        } catch (JsonProcessingException e){
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     @SneakyThrows
     private void minerarPilaCoin(BigInteger dificuldade, Boolean mineracaoAtiva) {
@@ -121,39 +122,39 @@ public class PilaValidationService {
         }
     }
 
-    @RabbitListener(queues = "pila-minerado")
-    public void receivePilaCoinMinerado(@Payload String pilaJsonString) {
-        try {
-            //ver o pila que chegou.
-            ObjectMapper objectMapper = new ObjectMapper();
-            PilaCoin pilaCoin = objectMapper.readValue(pilaJsonString, PilaCoin.class);
-            //ver se o pila é próprio ou de outro minerador:
-            System.out.println("*************************************************************************************");
-            System.out.println("********************* PILA MINERADO RECEBIDO!");
-            if (pilaCoin.getNomeCriador().equals("ewerton-joaokunde")) {
-                System.out.println("******************** PILA MINERADO RECEBIDO É PRÓPRIO!");
-                //se é meu: reenviar pra fila "pila-minerado".
-                System.out.println("******************** REENVIANDO PILA MINERADO RECEBIDO PARA FILA pila-minerado...");
-                rabbitTemplate.convertAndSend("pila-minerado", pilaJsonString);
-                System.out.println("******************** PILA MINERADO RECEBIDO REENVIADO COM SUCESSO!");
-                System.out.println("*************************************************************************************");
-            } else {
-                //se é de outro: enviar para método de validação de pilas.
-                System.out.println("******************** PILA MINERADO RECEBIDO NÃO É PRÓPRIO...");
-                System.out.println("******************** ENVIANDO PARA VALIDAÇÃO...");
-                System.out.println("*************************************************************************************");
-                validaPilas(pilaCoin, pilaJsonString);
-            }
-            System.out.println("************* PilaCoin minerado recebido: " + pilaCoin);
-
-        } catch (JsonProcessingException e) {
-            System.out.println("*************************************************************************************");
-            System.out.println("************** ERRO COM PILACOIN RECEBIDO...REENVIANDO...");
-            System.out.println("*************************************************************************************");
-            rabbitTemplate.convertAndSend("pila-minerado", pilaJsonString);
-            //throw new RuntimeException("Erro ao processar a PilaCoin minerada", e);
-        }
-    }
+//    @RabbitListener(queues = "pila-minerado")
+//    public void receivePilaCoinMinerado(@Payload String pilaJsonString) {
+//        try {
+//            //ver o pila que chegou.
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            PilaCoin pilaCoin = objectMapper.readValue(pilaJsonString, PilaCoin.class);
+//            //ver se o pila é próprio ou de outro minerador:
+//            System.out.println("*************************************************************************************");
+//            System.out.println("********************* PILA MINERADO RECEBIDO!");
+//            if (pilaCoin.getNomeCriador().equals("ewerton-joaokunde")) {
+//                System.out.println("******************** PILA MINERADO RECEBIDO É PRÓPRIO!");
+//                //se é meu: reenviar pra fila "pila-minerado".
+//                System.out.println("******************** REENVIANDO PILA MINERADO RECEBIDO PARA FILA pila-minerado...");
+//                rabbitTemplate.convertAndSend("pila-minerado", pilaJsonString);
+//                System.out.println("******************** PILA MINERADO RECEBIDO REENVIADO COM SUCESSO!");
+//                System.out.println("*************************************************************************************");
+//            } else {
+//                //se é de outro: enviar para método de validação de pilas.
+//                System.out.println("******************** PILA MINERADO RECEBIDO NÃO É PRÓPRIO...");
+//                System.out.println("******************** ENVIANDO PARA VALIDAÇÃO...");
+//                System.out.println("*************************************************************************************");
+//                validaPilas(pilaCoin, pilaJsonString);
+//            }
+//            System.out.println("************* PilaCoin minerado recebido: " + pilaCoin);
+//
+//        } catch (JsonProcessingException e) {
+//            System.out.println("*************************************************************************************");
+//            System.out.println("************** ERRO COM PILACOIN RECEBIDO...REENVIANDO...");
+//            System.out.println("*************************************************************************************");
+//            rabbitTemplate.convertAndSend("pila-minerado", pilaJsonString);
+//            //throw new RuntimeException("Erro ao processar a PilaCoin minerada", e);
+//        }
+//    }
 
     //ativar esta audição da fila ewerton-joaokunde apenas depois de minerar algum pila, pois, senão, ela não existirá.
     @RabbitListener(queues = "ewerton-joaokunde")
