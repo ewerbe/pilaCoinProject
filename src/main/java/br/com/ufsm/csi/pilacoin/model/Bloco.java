@@ -19,8 +19,10 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
 public class Bloco {
+
     @Id
-    @JsonIgnore
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private Long id;
     private Long numeroBloco;
     private String nonce;
     private String nonceBlocoAnterior;
