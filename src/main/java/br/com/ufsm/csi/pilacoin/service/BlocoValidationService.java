@@ -2,15 +2,9 @@ package br.com.ufsm.csi.pilacoin.service;
 
 import br.com.ufsm.csi.pilacoin.model.Bloco;
 import br.com.ufsm.csi.pilacoin.model.DificuldadeJson;
-import br.com.ufsm.csi.pilacoin.model.PilaCoin;
-import br.com.ufsm.csi.pilacoin.model.Transacao;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import lombok.SneakyThrows;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,12 +13,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.*;
 
 @Service
 public class BlocoValidationService {
@@ -46,28 +38,48 @@ public class BlocoValidationService {
                                 UnsupportedEncodingException, NoSuchAlgorithmException {
         System.out.println("*********************** BLOCO RECEBIDO: " + strBloco);
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(strBloco);
-        mineraBloco();
+        JsonNode nodeBloco = mapper.readTree(strBloco);
+        System.out.println("************************* node.get('nomeUsuarioMinerador') do bloco = " + nodeBloco.get("nomeUsuarioMinerador"));
+        String nomeUsuarioMineradorBlocoPreenchido = null;
+        if(nodeBloco.get("nomeUsuarioMinerador") != null) {
+            nomeUsuarioMineradorBlocoPreenchido = nodeBloco.get("nomeUsuarioMinerador").toString();
+        }
+        if(nomeUsuarioMineradorBlocoPreenchido == null ||
+                nomeUsuarioMineradorBlocoPreenchido.isEmpty()) {
+            mineraBloco(strBloco);
+        } else {
+            System.out.println("************************* BLOCO JÁ MINERADO POR OUTRO...");
+        }
     }
 
-    private void mineraBloco() throws JsonProcessingException,
+    private void mineraBloco(String blocoStr) throws JsonProcessingException,
                             NoSuchAlgorithmException, UnsupportedEncodingException {
-        Bloco bloco = getBloco();
+//        Bloco bloco = getBloco(nodeBloco);
         Boolean mineracaoBloco = Boolean.TRUE;
-        // dificuldade = new BigInteger(dificuldadeStr, 16).abs();
-        dificuldade = new BigInteger(getDificuldade().getDificuldade(), 16).abs();
+        ObjectMapper objectMapper = new ObjectMapper();
+        //transforma a string do bloco em instância de Bloco.
+        Bloco bloco = objectMapper.readValue(blocoStr, Bloco.class);
+        parChaves = chaveService.leParChaves();
+        bloco.setChaveUsuarioMinerador(parChaves.getPublic().getEncoded());
+        bloco.setNomeUsuarioMinerador("ewerton-joaokunde");
+        DificuldadeJson dificuldadeJson = getDificuldade();
+        dificuldade = new BigInteger(dificuldadeJson.getDificuldade(), 16).abs();
+        System.out.println("******************************** INICIANDO MINERAÇÃO DO BLOCO...");
         while (mineracaoBloco) {
+            System.out.println("********************************************* MINERANDO...");
+            //setando o nonce para o bloco.
             bloco.setNonce(getNonceBloco());
+            //transformando o bloco em String.
             String blocoJson = new ObjectMapper().writeValueAsString(bloco);
-            // Gera um hash SHA-256 para o bloco.
             MessageDigest md = MessageDigest.getInstance("sha-256");
+            //transformando a string do bloco em hash.
             byte[] hash = md.digest(blocoJson.getBytes("UTF-8"));
             BigInteger numHash = new BigInteger(hash).abs();
             // Compara o hash gerado com a dificuldade
             if (numHash.compareTo(dificuldade) < 0) {
                 System.out.println("******************* 1 BLOCO MINERADO! *************************");
-                ObjectMapper objectMapper = new ObjectMapper();
-                String blocoMineradoStr = objectMapper.writeValueAsString(bloco);
+                ObjectMapper om = new ObjectMapper();
+                String blocoMineradoStr = om.writeValueAsString(bloco);
                 blocoService.save(bloco);
                 System.out.println("******************************* BLOCO SALVO COM SUCESSO! ENVIANDO PARA FILA...");
                 rabbitTemplate.convertAndSend("bloco-minerado", blocoMineradoStr);
@@ -79,14 +91,6 @@ public class BlocoValidationService {
 
     private DificuldadeJson getDificuldade() {
         return dificuldadeService.getLastDificuldade();
-    }
-
-    private Bloco getBloco() {
-        parChaves = chaveService.leParChaves();
-        return Bloco.builder()
-                .chaveUsuarioMinerador(parChaves.getPublic().getEncoded())
-                .nomeUsuarioMinerador("ewerton-joaokunde")
-                .build();
     }
 
     private String getNonceBloco() {
