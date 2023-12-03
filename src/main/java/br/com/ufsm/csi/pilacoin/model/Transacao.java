@@ -3,10 +3,7 @@ package br.com.ufsm.csi.pilacoin.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,7 +21,7 @@ import java.util.Date;
 public class Transacao {
 
     @Id
-    @JsonIgnore
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     private byte[] chaveUsuarioOrigem;
     private byte[] chaveUsuarioDestino;
@@ -32,7 +29,7 @@ public class Transacao {
     private String noncePila;
     private Date dataTransacao;
     private String Status;
-    @ManyToOne
-    @JoinColumn(name = "id_bloco")
-    private Bloco bloco;
+//    @ManyToOne
+//    @JoinColumn(name = "id_bloco")
+//    private Bloco bloco;
 }
