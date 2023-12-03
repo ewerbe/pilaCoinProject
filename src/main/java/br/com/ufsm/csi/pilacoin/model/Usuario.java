@@ -2,14 +2,13 @@ package br.com.ufsm.csi.pilacoin.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Collection;
 
 @Data
 @Builder
@@ -27,4 +26,14 @@ public class Usuario {
     private byte[] chavePublica;
     @Column(unique = true)
     private String nome;
+//    @OneToMany(mappedBy = "usuariosResult")
+//    private Collection<QueryResposta> queryResposta;
+//
+//    public Collection<QueryResposta> getQueryResposta() {
+//        return queryResposta;
+//    }
+//
+//    public void setQueryResposta(Collection<QueryResposta> queryResposta) {
+//        this.queryResposta = queryResposta;
+//    }
 }
