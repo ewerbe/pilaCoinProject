@@ -1,6 +1,9 @@
 package br.com.ufsm.csi.pilacoin.service;
 
+import br.com.ufsm.csi.pilacoin.model.Bloco;
 import br.com.ufsm.csi.pilacoin.model.Query;
+import br.com.ufsm.csi.pilacoin.model.QueryResposta;
+import br.com.ufsm.csi.pilacoin.model.Usuario;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,11 +15,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class TransferenciaValidationService {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
+    @Autowired
+    private UsuarioService usuarioService;
 
     //query de requisição da listagem de usuários, blocos ou pilas;
     public void enviaQuery(Query query) throws JsonProcessingException {
@@ -34,20 +41,25 @@ public class TransferenciaValidationService {
             System.out.println("***************************** RECEBIDA QUERY RESPOSTA...");
             System.out.println("***************************** QUERY RECEBIDA DE RESPOSTA: " + queryResposta);
             //se é USUARIOS envia para tratamento de usuarios;
-            //transforma pra nodeJson pra pegar a propriedade tipoQuery;
             ObjectMapper mapper = new ObjectMapper();
             JsonNode nodeQueryResposta = mapper.readTree(queryResposta);
-            String retornoQuery = nodeQueryResposta.get("blocosResult").toString();
-            System.out.println("***************************** RECEBIDA QUERY RESPOSTA...");
-            if(retornoQuery.isEmpty()) {
-                System.out.println("************************ RECEBIDA QUERY USUARIOS *********");
+            //idQuery para query de listagem de usuários.
+            if(nodeQueryResposta.get("idQuery").toString().equals("1340")) {
                 salvaListaUsuarios(queryResposta);
             } else {
-                System.out.println("************************ RECEBIDA QUERY BLOCOS *********");
-                salvaListaBlocos(queryResposta);
+                System.out.println("************************************** NÃO ENTROU NA PERSISTÊNCIA DA LISTA DE USUÁRIOS...");
             }
+//            String retornoQuery = nodeQueryResposta.get("blocosResult").toString();
+//            System.out.println("***************************** RECEBIDA QUERY RESPOSTA...");
+//            if(retornoQuery.isEmpty()) {
+//                System.out.println("************************ RECEBIDA QUERY USUARIOS *********");
+//
+//            } else {
+//                System.out.println("************************ RECEBIDA QUERY BLOCOS *********");
+//                salvaListaBlocos(queryResposta);
+//            }
             //se é BLOCOS envia para tratamento de blocos.
-            System.out.println("*************** Query resposta recebida: "+ queryResposta);
+            //System.out.println("*************** Query resposta recebida: "+ queryResposta);
         } catch (Exception e) {
             throw new RuntimeException("Erro ao receber query resposta! ", e);
         }
@@ -83,10 +95,16 @@ public class TransferenciaValidationService {
                 .build();
     }
 
-    private void salvaListaUsuarios(String queryRespostaUsuarios) {
+    private void salvaListaUsuarios(String queryRespostaUsuariosString) throws JsonProcessingException {
         //trata a lista de usuarios e envia pro banco;
-        //imprimir o que veio na lista pra ver como tá
-        System.out.println("********************************* queryRespostaUsuarios = " + queryRespostaUsuarios);
+        ObjectMapper objectMapper = new ObjectMapper();
+        QueryResposta queryRespostaUsuarios = objectMapper
+                                                .readValue(queryRespostaUsuariosString, QueryResposta.class);
+        System.out.println("********************************* queryRespostaUsuarios = " + queryRespostaUsuariosString);
+        System.out.println("*************************************** SALVANDO LISTA DE USUÁRIOS...");
+        List<Usuario> usuariosList = queryRespostaUsuarios.getUsuariosResult();
+        usuarioService.saveAll(usuariosList);
+        System.out.println("*************************************** LISTA DE USUÁRIOS SALVA COM SUCESSO!");
     }
 
     private void salvaListaBlocos(String queryRespostaBlocos) {
