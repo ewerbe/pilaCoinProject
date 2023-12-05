@@ -58,39 +58,39 @@
 //        }
 //    }
 //
-////    @RabbitListener(queues = "bloco-minerado")
-////    public void receiveBlocoMinerado(@Payload String blocoJsonString) {
-////        try {
-////            //ver o pila que chegou.
-////            ObjectMapper objectMapper = new ObjectMapper();
-////            Bloco bloco = objectMapper.readValue(blocoJsonString, Bloco.class);
-////            //ver se o pila é próprio ou de outro minerador:
-////            System.out.println("*************************************************************************************");
-////            System.out.println("********************* BLOCO MINERADO RECEBIDO!");
-////            if (bloco.getNomeUsuarioMinerador().equals("ewerton-joaokunde")) {
-////                System.out.println("******************** BLOCO MINERADO RECEBIDO É PRÓPRIO!");
-////                //se é meu: reenviar pra fila "bloco-minerado".
-////                System.out.println("******************** REENVIANDO BLOCO MINERADO RECEBIDO PARA FILA bloco-minerado...");
-////                rabbitTemplate.convertAndSend("bloco-minerado", blocoJsonString);
-////                System.out.println("******************** BLOCO MINERADO RECEBIDO REENVIADO COM SUCESSO!");
-////                System.out.println("*************************************************************************************");
-////            } else {
-////                //se é de outro: enviar para método de validação de blocos.
-////                System.out.println("******************** BLOCO MINERADO RECEBIDO NÃO É PRÓPRIO...");
-////                System.out.println("******************** ENVIANDO PARA VALIDAÇÃO...");
-////                System.out.println("*************************************************************************************");
-////                validaBlocos(bloco, blocoJsonString);
-////            }
-////            System.out.println("************* BLOCO MINERADO RECEBIDO: " + bloco);
-////
-////        } catch (JsonProcessingException e) {
-////            System.out.println("*************************************************************************************");
-////            System.out.println("************** ERRO COM BLOCO MINERADO RECEBIDO...REENVIANDO...");
-////            System.out.println("*************************************************************************************");
-////            rabbitTemplate.convertAndSend("bloco-minerado", blocoJsonString);
-////            //throw new RuntimeException("Erro ao processar a PilaCoin minerada", e);
-////        }
-////    }
+//    @RabbitListener(queues = "bloco-minerado")
+//    public void receiveBlocoMinerado(@Payload String blocoJsonString) {
+//        try {
+//            //ver o pila que chegou.
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            Bloco bloco = objectMapper.readValue(blocoJsonString, Bloco.class);
+//            //ver se o pila é próprio ou de outro minerador:
+//            System.out.println("*************************************************************************************");
+//            System.out.println("********************* BLOCO MINERADO RECEBIDO!");
+//            if (bloco.getNomeUsuarioMinerador().equals("ewerton-joaokunde")) {
+//                System.out.println("******************** BLOCO MINERADO RECEBIDO É PRÓPRIO!");
+//                //se é meu: reenviar pra fila "bloco-minerado".
+//                System.out.println("******************** REENVIANDO BLOCO MINERADO RECEBIDO PARA FILA bloco-minerado...");
+//                rabbitTemplate.convertAndSend("bloco-minerado", blocoJsonString);
+//                System.out.println("******************** BLOCO MINERADO RECEBIDO REENVIADO COM SUCESSO!");
+//                System.out.println("*************************************************************************************");
+//            } else {
+//                //se é de outro: enviar para método de validação de blocos.
+//                System.out.println("******************** BLOCO MINERADO RECEBIDO NÃO É PRÓPRIO...");
+//                System.out.println("******************** ENVIANDO PARA VALIDAÇÃO...");
+//                System.out.println("*************************************************************************************");
+//                validaBlocos(bloco, blocoJsonString);
+//            }
+//            System.out.println("************* BLOCO MINERADO RECEBIDO: " + bloco);
+//
+//        } catch (JsonProcessingException e) {
+//            System.out.println("*************************************************************************************");
+//            System.out.println("************** ERRO COM BLOCO MINERADO RECEBIDO...REENVIANDO...");
+//            System.out.println("*************************************************************************************");
+//            rabbitTemplate.convertAndSend("bloco-minerado", blocoJsonString);
+//            //throw new RuntimeException("Erro ao processar a PilaCoin minerada", e);
+//        }
+//    }
 //
 //    private void mineraBloco(String blocoStr) throws JsonProcessingException,
 //                            NoSuchAlgorithmException, UnsupportedEncodingException {
