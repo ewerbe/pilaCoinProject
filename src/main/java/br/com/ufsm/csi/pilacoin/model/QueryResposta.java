@@ -17,23 +17,9 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class QueryResposta {
 
-    //@Id
     private Long idQuery;
     private String usuario; //mesmo nomeUsuario da query original (de requisição);
-//    @ManyToMany
-//    @JoinTable(
-//            name = "query_resposta_blocos",
-//            joinColumns = @JoinColumn(name = "id_query"),
-//            inverseJoinColumns = @JoinColumn(name = "id_bloco")
-//    )
+    private List<PilaCoin> pilasResult;
     private List<Bloco> blocosResult;
-
-//    @ManyToMany
-//    @JoinTable(
-//            name = "query_resposta_usuarios",
-//            joinColumns = @JoinColumn(name = "id_query"),
-//            inverseJoinColumns = @JoinColumn(name = "id_usuario")
-//    )
     private List<Usuario> usuariosResult;
-
 }
