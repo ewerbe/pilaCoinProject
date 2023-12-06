@@ -29,7 +29,4 @@ public class Transacao {
     private String noncePila;
     private Date dataTransacao;
     private String Status;
-//    @ManyToOne
-//    @JoinColumn(name = "id_bloco")
-//    private Bloco bloco;
 }
