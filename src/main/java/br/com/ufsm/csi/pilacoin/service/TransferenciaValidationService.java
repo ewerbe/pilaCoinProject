@@ -1,9 +1,6 @@
 package br.com.ufsm.csi.pilacoin.service;
 
-import br.com.ufsm.csi.pilacoin.model.Bloco;
-import br.com.ufsm.csi.pilacoin.model.Query;
-import br.com.ufsm.csi.pilacoin.model.QueryResposta;
-import br.com.ufsm.csi.pilacoin.model.Usuario;
+import br.com.ufsm.csi.pilacoin.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,6 +21,10 @@ public class TransferenciaValidationService {
     private RabbitTemplate rabbitTemplate;
     @Autowired
     private UsuarioService usuarioService;
+    @Autowired
+    private PilaCoinService pilaCoinService;
+    @Autowired
+    private ValidacaoPilaJsonService validacaoPilaJsonService;
 
     //query de requisição da listagem de usuários, blocos ou pilas;
     public void enviaQuery(Query query) throws JsonProcessingException {
@@ -36,18 +37,23 @@ public class TransferenciaValidationService {
 
     //recebe as queries de respostas das requisições enviadas pro server.
     @RabbitListener(queues = "ewerton-joaokunde-query")
-    public void recebeQueryResposta(@Payload String queryResposta) {
+    public void recebeQueryResposta(@Payload String queryRespostaString) {
         try {
             System.out.println("***************************** RECEBIDA QUERY RESPOSTA...");
-            System.out.println("***************************** QUERY RECEBIDA DE RESPOSTA: " + queryResposta);
+//            System.out.println("***************************** QUERY RECEBIDA DE RESPOSTA: " + queryResposta);
             //se é USUARIOS envia para tratamento de usuarios;
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode nodeQueryResposta = mapper.readTree(queryResposta);
+            ObjectMapper objectMapper = new ObjectMapper();
+            QueryResposta queryResposta = objectMapper
+                    .readValue(queryRespostaString, QueryResposta.class);
             //idQuery para query de listagem de usuários.
-            if(nodeQueryResposta.get("idQuery").toString().equals("1340")) {
+            //System.out.println("************************************************ queryResposta = " + queryRespostaString);
+            if(queryResposta.getUsuariosResult() != null && !queryResposta.getUsuariosResult().isEmpty()) {
                 salvaListaUsuarios(queryResposta);
-            } else {
-                System.out.println("************************************** NÃO ENTROU NA PERSISTÊNCIA DA LISTA DE USUÁRIOS...");
+            } else if (queryResposta.getPilasResult() != null && !queryResposta.getPilasResult().isEmpty()) {
+                salvaMeusPilaCoinsValidados(queryResposta);
+            }
+            else {
+                System.out.println("************************************** NÃO ENTROU EM NADA!");
             }
 //            String retornoQuery = nodeQueryResposta.get("blocosResult").toString();
 //            System.out.println("***************************** RECEBIDA QUERY RESPOSTA...");
@@ -66,17 +72,46 @@ public class TransferenciaValidationService {
     }
 
     //requisita a lista de usuários e a lista de blocos para persisti-las na base de dados.
+//    @PostConstruct
+//    private void buscaListagens() throws JsonProcessingException {
+//        //monta a query do tipo USUARIOS e envia através do método enviarQuery(queryUsuarios);
+//        System.out.println("************************************* BUSCANDO LISTAGENS...");
+//        Query queryUsuarios = getQueryUsuarios();
+//        System.out.println("************************************* BUSCANDO LISTAGENS DE USUARIOS...");
+//        enviaQuery(queryUsuarios);
+//        //monta a query do tipo BLOCOS e envia através do método enviarQuery(queryBlocos);
+//        Query queryBlocos = getQueryBlocos();
+//        System.out.println("************************************* BUSCANDO LISTAGENS DE BLOCOS...");
+//        enviaQuery(queryBlocos);
+//    }
+
+//    @PostConstruct
+//    private void testaTransferenciaPilaCoin() throws JsonProcessingException {
+//        //monta um objeto usuarioDestino para receber a transferencia e instancia um pila válido para ser transferido
+//        System.out.println("************************************* TESTANDO TRANSFERÊNCIA DE PILACOIN...");
+//        List<Usuario> listaUsuarios = usuarioService.findAll();
+//        Usuario usuarioDestino = listaUsuarios.get(4);
+//        //TODO: pegar um pila meu válido do banco (popular o banco antes); *********************************
+//        List<PilaCoin> listaPilaCoins = pilaValidadoService.findAll();
+//        PilaCoin pilaCoin = listaPilaCoins.get(4);
+//        tranferePilaCoin(pilaCoin, usuarioDestino);
+//    }
+
+    //requisita os meus pilaCoins validados do servidor para jogar pro banco.
     @PostConstruct
-    private void buscaListagens() throws JsonProcessingException {
-        //monta a query do tipo USUARIOS e envia através do método enviarQuery(queryUsuarios);
-        System.out.println("************************************* BUSCANDO LISTAGENS...");
-        Query queryUsuarios = getQueryUsuarios();
-        System.out.println("************************************* BUSCANDO LISTAGENS DE USUARIOS...");
-        enviaQuery(queryUsuarios);
-        //monta a query do tipo BLOCOS e envia através do método enviarQuery(queryBlocos);
-        Query queryBlocos = getQueryBlocos();
-        System.out.println("************************************* BUSCANDO LISTAGENS DE BLOCOS...");
-        enviaQuery(queryBlocos);
+    private void buscaMeusPilaCoinsValidados() throws JsonProcessingException {
+        System.out.println("************************************* BUSCANDO MEUS PILACOINS...");
+        //monta a query do tipo PILAS e envia através do método enviarQuery(queryBlocos);
+        Query queryPilas = getQueryPilas();
+        enviaQuery(queryPilas);
+    }
+
+    private Query getQueryPilas() {
+        return Query.builder()
+                .idQuery(13667L)
+                .nomeUsuario("ewerton-joaokunde")
+                .tipoQuery(Query.TypeQuery.PILA)
+                .build();
     }
 
     private Query getQueryUsuarios() {
@@ -95,23 +130,37 @@ public class TransferenciaValidationService {
                 .build();
     }
 
-    private void salvaListaUsuarios(String queryRespostaUsuariosString) throws JsonProcessingException {
+    private void salvaListaUsuarios(QueryResposta queryRespostaUsuarios) throws JsonProcessingException {
         //trata a lista de usuarios e envia pro banco;
-        ObjectMapper objectMapper = new ObjectMapper();
-        QueryResposta queryRespostaUsuarios = objectMapper
-                                                .readValue(queryRespostaUsuariosString, QueryResposta.class);
-        System.out.println("********************************* queryRespostaUsuarios = " + queryRespostaUsuariosString);
         System.out.println("*************************************** SALVANDO LISTA DE USUÁRIOS...");
         List<Usuario> usuariosList = queryRespostaUsuarios.getUsuariosResult();
         usuarioService.saveAll(usuariosList);
         System.out.println("*************************************** LISTA DE USUÁRIOS SALVA COM SUCESSO!");
     }
 
+    private void salvaMeusPilaCoinsValidados(QueryResposta queryRespostaPilas) throws JsonProcessingException {
+        //trata a lista de pilaCoins e envia pro banco;
+        System.out.println("*************************************** SALVANDO LISTA DE MEUS PILACOINS VÁLIDOS...");
+        List<PilaCoin> pilaCoinList = queryRespostaPilas.getPilasResult();
+        for(PilaCoin pila : pilaCoinList) {
+            if(pila.getNomeCriador().equals("ewerton-joaokunde") && pila.getStatus().equals("VALIDO")) {
+                System.out.println("*********************************** SALVANDO PILA VÁLIDO PRÓPRIO NO BANCO...");
+                pilaCoinService.save(pila);
+                System.out.println("*********************************** PILA VÁLIDO PRÓPRIO SALVO COM SUCESSO!");
+            }
+        }
+        System.out.println("******************************************* ACABOU DE SALVAR OS PILA VÁLIDOS PRÓPRIOS NO BANCO!");
+    }
+
     private void salvaListaBlocos(String queryRespostaBlocos) {
         //trata a lista de blocos e envia pro banco;
         System.out.println("********************************* queryRespostaBlocos = " + queryRespostaBlocos);
     }
-    //transferir pilacoin;
 
+    //transferir pilacoin;
+    public void tranferePilaCoin(PilaCoin pilaCoin, Usuario usuarioDestino) {
+        //recebe o meu pila para ser transferido para o usuario tbm recebido.
+
+    }
 
 }
