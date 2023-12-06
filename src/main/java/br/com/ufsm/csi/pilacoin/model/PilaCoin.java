@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Builder
@@ -26,6 +27,7 @@ public class PilaCoin {
     private String nomeCriador;
     private String status;
     private String nonce;
-
+    @Transient
+    private List<Transacao> transacoes;
 
 }
