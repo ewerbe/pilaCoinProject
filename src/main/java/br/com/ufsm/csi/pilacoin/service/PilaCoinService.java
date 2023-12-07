@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PilaCoinService {
@@ -19,5 +20,9 @@ public class PilaCoinService {
 
     public void saveAll(List<PilaCoin> pilaCoinList) {
         pilaCoinRepository.saveAll(pilaCoinList);
+    }
+
+    public Optional<PilaCoin> findById(Long idPila) {
+        return pilaCoinRepository.findById(idPila);
     }
 }
