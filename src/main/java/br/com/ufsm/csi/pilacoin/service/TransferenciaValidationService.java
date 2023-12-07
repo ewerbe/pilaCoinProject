@@ -2,7 +2,6 @@ package br.com.ufsm.csi.pilacoin.service;
 
 import br.com.ufsm.csi.pilacoin.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import jakarta.annotation.PostConstruct;
@@ -12,7 +11,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TransferenciaValidationService {
@@ -25,6 +35,10 @@ public class TransferenciaValidationService {
     private PilaCoinService pilaCoinService;
     @Autowired
     private ValidacaoPilaJsonService validacaoPilaJsonService;
+    @Autowired
+    private ChaveService chaveService;
+    @Autowired
+    private TransacaoService transacaoService;
 
     //query de requisição da listagem de usuários, blocos ou pilas;
     public void enviaQuery(Query query) throws JsonProcessingException {
@@ -85,26 +99,27 @@ public class TransferenciaValidationService {
 //        enviaQuery(queryBlocos);
 //    }
 
-//    @PostConstruct
-//    private void testaTransferenciaPilaCoin() throws JsonProcessingException {
-//        //monta um objeto usuarioDestino para receber a transferencia e instancia um pila válido para ser transferido
-//        System.out.println("************************************* TESTANDO TRANSFERÊNCIA DE PILACOIN...");
-//        List<Usuario> listaUsuarios = usuarioService.findAll();
-//        Usuario usuarioDestino = listaUsuarios.get(4);
-//        //TODO: pegar um pila meu válido do banco (popular o banco antes); *********************************
-//        List<PilaCoin> listaPilaCoins = pilaValidadoService.findAll();
-//        PilaCoin pilaCoin = listaPilaCoins.get(4);
-//        tranferePilaCoin(pilaCoin, usuarioDestino);
-//    }
+    @PostConstruct
+    private void testaTransferenciaPilaCoin() throws JsonProcessingException, NoSuchPaddingException,
+                                                IllegalBlockSizeException, NoSuchAlgorithmException,
+                                                BadPaddingException, InvalidKeyException {
+        //monta um objeto usuarioDestino para receber a transferencia e instancia um pila válido para ser transferido
+        System.out.println("************************************* TESTANDO TRANSFERÊNCIA DE PILACOIN...");
+        List<Usuario> listaUsuarios = usuarioService.findAll();
+        Usuario usuarioDestino = listaUsuarios.get(4);
+        //TODO: pegar um pila meu válido do banco (popular o banco antes); *********************************
+        Optional<PilaCoin> pilaCoin = pilaCoinService.findById(65L);
+        tranferePilaCoin(pilaCoin, usuarioDestino);
+    }
 
     //requisita os meus pilaCoins validados do servidor para jogar pro banco.
-    @PostConstruct
-    private void buscaMeusPilaCoinsValidados() throws JsonProcessingException {
-        System.out.println("************************************* BUSCANDO MEUS PILACOINS...");
-        //monta a query do tipo PILAS e envia através do método enviarQuery(queryBlocos);
-        Query queryPilas = getQueryPilas();
-        enviaQuery(queryPilas);
-    }
+//    @PostConstruct
+//    private void buscaMeusPilaCoinsValidados() throws JsonProcessingException {
+//        System.out.println("************************************* BUSCANDO MEUS PILACOINS...");
+//        //monta a query do tipo PILAS e envia através do método enviarQuery(queryBlocos);
+//        Query queryPilas = getQueryPilas();
+//        enviaQuery(queryPilas);
+//    }
 
     private Query getQueryPilas() {
         return Query.builder()
@@ -158,9 +173,43 @@ public class TransferenciaValidationService {
     }
 
     //transferir pilacoin;
-    public void tranferePilaCoin(PilaCoin pilaCoin, Usuario usuarioDestino) {
+    public void tranferePilaCoin(Optional<PilaCoin> pilaCoin, Usuario usuarioDestino) throws
+                                JsonProcessingException, NoSuchPaddingException, IllegalBlockSizeException,
+                                NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         //recebe o meu pila para ser transferido para o usuario tbm recebido.
+        //instancia o objeto transacao
+        KeyPair parChaves = chaveService.leParChaves();
+        //fazer a assinatura pra inserir no objeto transacaoPilaCoin.
+        Transacao transacaoPilaCoin = Transacao
+                .builder()
+                .chaveUsuarioOrigem(parChaves.getPublic().getEncoded())
+                .chaveUsuarioDestino(usuarioDestino.getChavePublica())
+                .noncePila(pilaCoin.get().getNonce())
+                .dataTransacao(new Date())
+                .build();
+        byte[] assinaturaPilaTransferencia = assinaPilaCoinTransferencia(transacaoPilaCoin);
+        transacaoPilaCoin.setAssinatura(assinaturaPilaTransferencia);
+        System.out.println("******************************************* TRANSACAO ASSINADA COM SUCESSO!");
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String transacaoPilaCoinString = ow.writeValueAsString(transacaoPilaCoin);
+        transacaoService.save(transacaoPilaCoin);
+        System.out.println("****************************** TRANSACAO SALVA EM BANCO E ENVIADA PARA FILA!");
+        rabbitTemplate.convertAndSend("transferir-pila", transacaoPilaCoinString);
+    }
 
+    private byte[] assinaPilaCoinTransferencia(Transacao transacaoPilaCoin) throws NoSuchAlgorithmException,
+                                                NoSuchPaddingException, JsonProcessingException, InvalidKeyException,
+                                                IllegalBlockSizeException, BadPaddingException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String transacaoPilaCoinString = ow.writeValueAsString(transacaoPilaCoin);
+        byte[] hash = md.digest(transacaoPilaCoinString.getBytes(StandardCharsets.UTF_8));
+        Cipher cipherRSA = Cipher.getInstance("RSA");
+        //iniciar o cipherRSA com o modo encriptografador;
+        KeyPair parChaves2 = chaveService.leParChaves();
+        cipherRSA.init(Cipher.ENCRYPT_MODE, parChaves2.getPrivate());
+        System.out.println("*************************** ASSINANDO TRANSACAO DE PILA...");
+        return cipherRSA.doFinal(hash);
     }
 
 }
