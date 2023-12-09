@@ -56,31 +56,35 @@ public class PilaValidationService {
 
     public static KeyPair parChaves = null;
     private static BigInteger dificuldade = BigInteger.ZERO;
+    private static Boolean mineracaoAtiva = Boolean.FALSE;
 
-//    @RabbitListener(queues = {"${queue.dificuldade}"})
-//    public void receivePilaCoin(@Payload String strPilaCoinJson) {
-//        try {
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            Map<String, Object> retornoDificuldade = objectMapper.readValue(strPilaCoinJson,
-//                    new TypeReference<Map<String, Object>>() {});
-//            String dificuldadeStr = retornoDificuldade.get("dificuldade").toString();
-//            dificuldade = new BigInteger(dificuldadeStr, 16).abs();
-//            //BigInteger dificuldadeFromQueue = new BigInteger(stDificuldade, 16).abs();
-//            DificuldadeJson dificuldadePersistencia = new DificuldadeJson();
-//            dificuldadePersistencia.setDificuldade(dificuldadeStr);
-//            dificuldadePersistencia.setInicio(retornoDificuldade.get("inicio").toString());
-//            dificuldadePersistencia.setValidadeFinal(retornoDificuldade.get("validadeFinal").toString());
-//            dificuldadeService.save(dificuldadePersistencia);
-//
-//            System.out.println("DificuldadeRetorno = " + retornoDificuldade);
-//            System.out.println("dificuldadeStr = " + dificuldadeStr);
-//            System.out.println("dificuldade BigInteger = " + dificuldade);
-//            //chamar o método para minerar;
-//            minerarPilaCoin(dificuldade, Boolean.TRUE);
-//        } catch (JsonProcessingException e){
-//            throw new RuntimeException(e);
-//        }
-//    }
+    @RabbitListener(queues = {"${queue.dificuldade}"})
+    public void receivePilaCoin(@Payload String strPilaCoinJson) {
+        while(mineracaoAtiva) {
+            try {
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                Map<String, Object> retornoDificuldade = objectMapper.readValue(strPilaCoinJson,
+                        new TypeReference<Map<String, Object>>() {});
+                String dificuldadeStr = retornoDificuldade.get("dificuldade").toString();
+                dificuldade = new BigInteger(dificuldadeStr, 16).abs();
+                //BigInteger dificuldadeFromQueue = new BigInteger(stDificuldade, 16).abs();
+                DificuldadeJson dificuldadePersistencia = new DificuldadeJson();
+                dificuldadePersistencia.setDificuldade(dificuldadeStr);
+                dificuldadePersistencia.setInicio(retornoDificuldade.get("inicio").toString());
+                dificuldadePersistencia.setValidadeFinal(retornoDificuldade.get("validadeFinal").toString());
+                dificuldadeService.save(dificuldadePersistencia);
+
+                System.out.println("DificuldadeRetorno = " + retornoDificuldade);
+                System.out.println("dificuldadeStr = " + dificuldadeStr);
+                System.out.println("dificuldade BigInteger = " + dificuldade);
+                //chamar o método para minerar;
+                minerarPilaCoin(dificuldade, Boolean.TRUE);
+            } catch (JsonProcessingException e){
+                throw new RuntimeException(e);
+            }
+        }
+    }
 
     @SneakyThrows
     private void minerarPilaCoin(BigInteger dificuldade, Boolean mineracaoAtiva) {
@@ -167,14 +171,14 @@ public class PilaValidationService {
     }
 
     //fila para relatório de funcionalidades desenvolvidas no projeto.
-    @RabbitListener(queues = "report")
-    public void receiveUsersReport(@Payload String usersReport) {
-        try {
-            System.out.println("*************** Relatório recebido: "+ usersReport);
-        } catch (Exception e) {
-            throw new RuntimeException("*********** Erro ao receber relatório! ", e);
-        }
-    }
+//    @RabbitListener(queues = "report")
+//    public void receiveUsersReport(@Payload String usersReport) {
+//        try {
+//            System.out.println("*************** Relatório recebido: "+ usersReport);
+//        } catch (Exception e) {
+//            throw new RuntimeException("*********** Erro ao receber relatório! ", e);
+//        }
+//    }
 
     private void validaPilas(PilaCoin pilaCoin, String pilaMineradoRebecido) {
         try{
@@ -261,4 +265,13 @@ public class PilaValidationService {
         return new SecureRandom();
     }
 
+    public String iniciaMineracao() {
+        mineracaoAtiva = Boolean.TRUE;
+        return "mineracaoAtiva";
+    }
+
+    public String paraMineracao() {
+        mineracaoAtiva = Boolean.FALSE;
+        return "mineracaoParada";
+    }
 }
