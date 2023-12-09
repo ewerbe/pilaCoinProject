@@ -51,7 +51,6 @@ public class PilaCoinController {
 
     @GetMapping("/pilas/saldo")
     private Integer getSaldo() {
-        //List<PilaValidadoDto> validadosOutros = new LinkedList<>();
         try{
             return pilaCoinService.getSaldo();
         }catch (Exception e ){
