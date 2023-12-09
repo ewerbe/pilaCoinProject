@@ -158,7 +158,7 @@ public class TransferenciaValidationService {
     }
 
     //transferir pilacoin;
-    public void tranferePilaCoin(Optional<PilaCoin> pilaCoin, Optional<Usuario> usuarioDestino) throws
+    private void transferePilaCoin(Optional<PilaCoin> pilaCoin, Optional<Usuario> usuarioDestino) throws
                                 JsonProcessingException, NoSuchPaddingException, IllegalBlockSizeException,
                                 NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         //recebe o meu pila para ser transferido para o usuario tbm recebido.
@@ -200,4 +200,18 @@ public class TransferenciaValidationService {
         return cipherRSA.doFinal(hash);
     }
 
+    public String transferirPilaCoin(Long idUsuario) throws NoSuchPaddingException, IllegalBlockSizeException,
+                                                            NoSuchAlgorithmException, BadPaddingException,
+                                                            InvalidKeyException, JsonProcessingException {
+        //pega o usuarioDestino, pega um pila válido que não tenha sido transferido ainda,
+        // instancia a transacao, assina e envia pra fila "transferir-pila";
+        Optional<Usuario> usuario = usuarioService.findById(idUsuario);
+        PilaCoin pilaValido = getPilaValido();
+        transferePilaCoin(Optional.ofNullable(pilaValido), usuario);
+        return "pilaTransferido";
+    }
+
+    private PilaCoin getPilaValido() {
+        return pilaCoinService.getPilaCoinValidoParaTransferir();
+    }
 }
