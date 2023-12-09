@@ -86,16 +86,16 @@ public class TransferenciaValidationService {
 //        enviaQuery(queryBlocos);
 //    }
 
-    @PostConstruct
-    private void testaTransferenciaPilaCoin() throws JsonProcessingException, NoSuchPaddingException,
-                                                IllegalBlockSizeException, NoSuchAlgorithmException,
-                                                BadPaddingException, InvalidKeyException {
-        //monta um objeto usuarioDestino para receber a transferencia e instancia um pila válido para ser transferido
-        System.out.println("************************************* TESTANDO TRANSFERÊNCIA DE PILACOIN...");
-        Optional<Usuario> usuarioDestino = usuarioService.findById(Long.valueOf(4));
-        Optional<PilaCoin> pilaCoin = pilaCoinService.findById(67L);
-        tranferePilaCoin(pilaCoin, usuarioDestino);
-    }
+//    @PostConstruct
+//    private void testaTransferenciaPilaCoin() throws JsonProcessingException, NoSuchPaddingException,
+//                                                IllegalBlockSizeException, NoSuchAlgorithmException,
+//                                                BadPaddingException, InvalidKeyException {
+//        //monta um objeto usuarioDestino para receber a transferencia e instancia um pila válido para ser transferido
+//        System.out.println("************************************* TESTANDO TRANSFERÊNCIA DE PILACOIN...");
+//        Optional<Usuario> usuarioDestino = usuarioService.findById(Long.valueOf(4));
+//        Optional<PilaCoin> pilaCoin = pilaCoinService.findById(67L);
+//        tranferePilaCoin(pilaCoin, usuarioDestino);
+//    }
 
     //requisita os meus pilaCoins validados do servidor para jogar pro banco.
 //    @PostConstruct
