@@ -1,6 +1,7 @@
 package br.com.ufsm.csi.pilacoin.service;
 
 import br.com.ufsm.csi.pilacoin.model.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -54,13 +55,10 @@ public class TransferenciaValidationService {
     public void recebeQueryResposta(@Payload String queryRespostaString) {
         try {
             System.out.println("***************************** RECEBIDA QUERY RESPOSTA...");
-//            System.out.println("***************************** QUERY RECEBIDA DE RESPOSTA: " + queryResposta);
             //se é USUARIOS envia para tratamento de usuarios;
             ObjectMapper objectMapper = new ObjectMapper();
             QueryResposta queryResposta = objectMapper
                     .readValue(queryRespostaString, QueryResposta.class);
-            //idQuery para query de listagem de usuários.
-            //System.out.println("************************************************ queryResposta = " + queryRespostaString);
             if(queryResposta.getUsuariosResult() != null && !queryResposta.getUsuariosResult().isEmpty()) {
                 salvaListaUsuarios(queryResposta);
             } else if (queryResposta.getPilasResult() != null && !queryResposta.getPilasResult().isEmpty()) {
@@ -69,17 +67,6 @@ public class TransferenciaValidationService {
             else {
                 System.out.println("************************************** NÃO ENTROU EM NADA!");
             }
-//            String retornoQuery = nodeQueryResposta.get("blocosResult").toString();
-//            System.out.println("***************************** RECEBIDA QUERY RESPOSTA...");
-//            if(retornoQuery.isEmpty()) {
-//                System.out.println("************************ RECEBIDA QUERY USUARIOS *********");
-//
-//            } else {
-//                System.out.println("************************ RECEBIDA QUERY BLOCOS *********");
-//                salvaListaBlocos(queryResposta);
-//            }
-            //se é BLOCOS envia para tratamento de blocos.
-            //System.out.println("*************** Query resposta recebida: "+ queryResposta);
         } catch (Exception e) {
             throw new RuntimeException("Erro ao receber query resposta! ", e);
         }
@@ -105,10 +92,8 @@ public class TransferenciaValidationService {
                                                 BadPaddingException, InvalidKeyException {
         //monta um objeto usuarioDestino para receber a transferencia e instancia um pila válido para ser transferido
         System.out.println("************************************* TESTANDO TRANSFERÊNCIA DE PILACOIN...");
-        List<Usuario> listaUsuarios = usuarioService.findAll();
-        Usuario usuarioDestino = listaUsuarios.get(4);
-        //TODO: pegar um pila meu válido do banco (popular o banco antes); *********************************
-        Optional<PilaCoin> pilaCoin = pilaCoinService.findById(65L);
+        Optional<Usuario> usuarioDestino = usuarioService.findById(Long.valueOf(4));
+        Optional<PilaCoin> pilaCoin = pilaCoinService.findById(67L);
         tranferePilaCoin(pilaCoin, usuarioDestino);
     }
 
@@ -173,7 +158,7 @@ public class TransferenciaValidationService {
     }
 
     //transferir pilacoin;
-    public void tranferePilaCoin(Optional<PilaCoin> pilaCoin, Usuario usuarioDestino) throws
+    public void tranferePilaCoin(Optional<PilaCoin> pilaCoin, Optional<Usuario> usuarioDestino) throws
                                 JsonProcessingException, NoSuchPaddingException, IllegalBlockSizeException,
                                 NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         //recebe o meu pila para ser transferido para o usuario tbm recebido.
@@ -183,7 +168,9 @@ public class TransferenciaValidationService {
         Transacao transacaoPilaCoin = Transacao
                 .builder()
                 .chaveUsuarioOrigem(parChaves.getPublic().getEncoded())
-                .chaveUsuarioDestino(usuarioDestino.getChavePublica())
+                .chaveUsuarioDestino(usuarioDestino.get().getChavePublica())
+                .nomeUsuarioOrigem("ewerton-joaokunde")
+                .nomeUsuarioDestino(usuarioDestino.get().getNome())
                 .noncePila(pilaCoin.get().getNonce())
                 .dataTransacao(new Date())
                 .build();
@@ -201,11 +188,12 @@ public class TransferenciaValidationService {
                                                 NoSuchPaddingException, JsonProcessingException, InvalidKeyException,
                                                 IllegalBlockSizeException, BadPaddingException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
-        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        String transacaoPilaCoinString = ow.writeValueAsString(transacaoPilaCoin);
+        //ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        String transacaoPilaCoinString = objectMapper.writeValueAsString(transacaoPilaCoin);
         byte[] hash = md.digest(transacaoPilaCoinString.getBytes(StandardCharsets.UTF_8));
         Cipher cipherRSA = Cipher.getInstance("RSA");
-        //iniciar o cipherRSA com o modo encriptografador;
         KeyPair parChaves2 = chaveService.leParChaves();
         cipherRSA.init(Cipher.ENCRYPT_MODE, parChaves2.getPrivate());
         System.out.println("*************************** ASSINANDO TRANSACAO DE PILA...");
