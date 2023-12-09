@@ -6,10 +6,7 @@ import br.com.ufsm.csi.pilacoin.model.PilaCoinJson;
 import br.com.ufsm.csi.pilacoin.model.Usuario;
 import br.com.ufsm.csi.pilacoin.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -28,6 +25,8 @@ public class PilaCoinController {
     private PilaValidationService pilaValidationService;
     @Autowired
     private UsuarioService usuarioService;
+    @Autowired
+    private TransferenciaValidationService transferenciaValidationService;
 
     //Endpoint pra lista os pilas minerados. Estes pilas ainda não são válidos para transação,
     // então: não contar como Saldo.
@@ -95,17 +94,16 @@ public class PilaCoinController {
         }
         return null;
     }
-
-    //work in progress.
-//    @PostMapping("/pilas/tranferir")
-//    private String tranferirPila(Long idUsuario) {
-//        try{
-//            //método para trazer os usuários;
-//            return usuarioService.transferirPila(idUsuario);
-//        }catch (Exception e ){
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
+    
+    @PostMapping("/pilas/transferir")
+    private String transferirPila(@RequestBody Long idUsuario) {
+        try{
+            //método para transferir pila para um usuário escolhido.
+            return transferenciaValidationService.transferirPilaCoin(idUsuario);
+        }catch (Exception e ){
+            e.printStackTrace();
+        }
+        return null;
+    }
 
 }
