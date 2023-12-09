@@ -4,6 +4,7 @@ package br.com.ufsm.csi.pilacoin.controller;
 import br.com.ufsm.csi.pilacoin.dto.PilaValidadoDto;
 import br.com.ufsm.csi.pilacoin.model.PilaCoinJson;
 import br.com.ufsm.csi.pilacoin.service.PilaCoinJsonService;
+import br.com.ufsm.csi.pilacoin.service.PilaCoinService;
 import br.com.ufsm.csi.pilacoin.service.PilaValidadoDtoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -21,6 +22,8 @@ public class PilaCoinController {
     private PilaCoinJsonService pilaCoinJsonService;
     @Autowired
     private PilaValidadoDtoService pilaValidadoDtoService;
+    @Autowired
+    private PilaCoinService pilaCoinService;
 
     //Endpoint pra lista os pilas minerados. Estes pilas ainda não são válidos para transação,
     // então: não contar como Saldo.
@@ -45,4 +48,17 @@ public class PilaCoinController {
         }
         return validadosOutros;
     }
+
+    @GetMapping("/pilas/saldo")
+    private Integer getSaldo() {
+        //List<PilaValidadoDto> validadosOutros = new LinkedList<>();
+        try{
+            return pilaCoinService.getSaldo();
+        }catch (Exception e ){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
 }

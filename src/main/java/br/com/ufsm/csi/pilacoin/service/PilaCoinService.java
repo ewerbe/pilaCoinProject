@@ -25,4 +25,19 @@ public class PilaCoinService {
     public Optional<PilaCoin> findById(Long idPila) {
         return pilaCoinRepository.findById(idPila);
     }
+
+    public Integer getSaldo() {
+        List<PilaCoin> listaTodosPilas = this.findAll();
+        Integer saldo = null;
+        for(PilaCoin pila : listaTodosPilas) {
+            if(pila.getStatus().equals("VALIDO")) {
+                saldo++;
+            }
+        }
+        return saldo;
+    }
+
+    private List<PilaCoin> findAll() {
+        return pilaCoinRepository.findAll();
+    }
 }
