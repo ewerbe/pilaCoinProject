@@ -8,8 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Collection;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -26,14 +24,4 @@ public class Usuario {
     private byte[] chavePublica;
     @Column(unique = true)
     private String nome;
-//    @OneToMany(mappedBy = "usuariosResult")
-//    private Collection<QueryResposta> queryResposta;
-//
-//    public Collection<QueryResposta> getQueryResposta() {
-//        return queryResposta;
-//    }
-//
-//    public void setQueryResposta(Collection<QueryResposta> queryResposta) {
-//        this.queryResposta = queryResposta;
-//    }
 }
