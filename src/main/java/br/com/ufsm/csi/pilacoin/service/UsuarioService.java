@@ -29,4 +29,9 @@ public class UsuarioService {
     public Optional<Usuario> findById(Long idUsuario) {
         return usuarioRepository.findById(idUsuario);
     }
+
+//    public String transferirPila(Long idUsuario) {
+//        Usuario usuario = this.findById(idUsuario);
+//
+//    }
 }
