@@ -5,6 +5,7 @@ import br.com.ufsm.csi.pilacoin.repository.PilaCoinRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,7 +38,19 @@ public class PilaCoinService {
         return saldo;
     }
 
-    private List<PilaCoin> findAll() {
+    public List<PilaCoin> findAll() {
         return pilaCoinRepository.findAll();
+    }
+
+    public PilaCoin getPilaCoinValidoParaTransferir() {
+        List<PilaCoin> listaPilas = this.findAll();
+        PilaCoin pilaRetorno = null;
+        for(PilaCoin pila : listaPilas) {
+            if(pila.getStatus().equals("VALIDO") && pila.getTransacoes().isEmpty()) {
+                pilaRetorno = pila;
+                return pilaRetorno;
+            }
+        }
+        return pilaRetorno;
     }
 }
