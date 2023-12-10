@@ -31,8 +31,8 @@ public class PilaCoinService {
         List<PilaCoin> listaTodosPilas = this.findAll();
         Integer saldo = 0;
         for(PilaCoin pila : listaTodosPilas) {
-            if(pila.getStatus().equals("VALIDO")) {
-                saldo++;
+            if(pila.getStatus() != null && pila.getStatus().equals("VALIDO")) {
+                saldo = saldo + 1;
             }
         }
         return saldo;
