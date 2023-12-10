@@ -80,11 +80,11 @@ public class TransferenciaValidationService {
 //        Query queryUsuarios = getQueryUsuarios();
 //        System.out.println("************************************* BUSCANDO LISTAGENS DE USUARIOS...");
 //        enviaQuery(queryUsuarios);
-//        //monta a query do tipo BLOCOS e envia através do método enviarQuery(queryBlocos);
+        //monta a query do tipo BLOCOS e envia através do método enviarQuery(queryBlocos);
 //        Query queryBlocos = getQueryBlocos();
 //        System.out.println("************************************* BUSCANDO LISTAGENS DE BLOCOS...");
 //        enviaQuery(queryBlocos);
-//    }
+   // }
 
 //    @PostConstruct
 //    private void testaTransferenciaPilaCoin() throws JsonProcessingException, NoSuchPaddingException,
