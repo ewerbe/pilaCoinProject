@@ -60,7 +60,6 @@ public class PilaValidationService {
 
     @RabbitListener(queues = {"${queue.dificuldade}"})
     public void receivePilaCoin(@Payload String strPilaCoinJson) {
-        while(mineracaoAtiva) {
             try {
 
                 ObjectMapper objectMapper = new ObjectMapper();
@@ -79,15 +78,14 @@ public class PilaValidationService {
                 System.out.println("dificuldadeStr = " + dificuldadeStr);
                 System.out.println("dificuldade BigInteger = " + dificuldade);
                 //chamar o método para minerar;
-                minerarPilaCoin(dificuldade, Boolean.TRUE);
+                minerarPilaCoin(dificuldade);
             } catch (JsonProcessingException e){
                 throw new RuntimeException(e);
             }
-        }
     }
 
     @SneakyThrows
-    private void minerarPilaCoin(BigInteger dificuldade, Boolean mineracaoAtiva) {
+    private void minerarPilaCoin(BigInteger dificuldade) {
 
         ChaveService chaveService = new ChaveService();
         //antes de minerar, vai pegar o par de chaves.
@@ -123,6 +121,9 @@ public class PilaValidationService {
                 System.out.println("**************************** PILA ENVIADO COM SUCESSO!");
                 System.out.println("****************************************************************************");
             }
+        }
+        if(!mineracaoAtiva) {
+            System.out.println("********************************* MINERAÇÃO INTERROMPIDA!");
         }
     }
 
